@@ -1,106 +1,293 @@
+/* PS70 Typewriter Theme - Sleek Black & White */
+
+/* Base Styles */
 body {
-    font: 20px "Gill Sans", Verdana, sans-serif;
-    line-height: 1.8;
-    color: #000000;
-    background-color: #dcdcdc;
-    padding-top: 0px !important;
-  }
+  font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #000000;
+  background-color: #FFFFFF;
+  padding-top: 0 !important;
+  margin: 0;
+}
+
+/* Main Content Container */
+#content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
 
 .textcontainer {
-  padding: 2% 10%;;
+  padding: 2% 10%;
 }
 
-p {font-size: 16px;}
-.margin {margin-bottom: 30px;}
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+  font-weight: 700;
+  color: #000000;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+  border-bottom: 2px solid #000000;
+  padding-bottom: 0.5rem;
+}
 
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+
+p {
+  font-size: 16px;
+  margin-bottom: 1rem;
+  color: #000000;
+}
+
+.margin {
+  margin-bottom: 30px;
+}
+
+/* Links */
 a {
   color: #000000;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  transition: all 0.2s ease;
 }
 
+a:hover {
+  background-color: #000000;
+  color: #FFFFFF;
+  text-decoration: none;
+  padding: 2px 4px;
+}
+
+/* Buttons */
+#btn, .btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #000000;
+  color: #FFFFFF;
+  border: 2px solid #000000;
+  font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+#btn:hover, .btn:hover {
+  background-color: #FFFFFF;
+  color: #000000;
+  border: 2px solid #000000;
+}
+
+/* Layout Utilities */
 .container-fluid {
-  padding: 0px;
-  /*padding-bottom: 70px;*/
-}
-
-nav {
-  background-color: #dcdcdc;
-  color: #EEE7E8;
-  padding: 50px 0px;
-}
-
-.navbar-nav {
-  display: flex;
-  justify-content: flex-start;
-  gap: 30px;
-}
-
-.nav-title{
-  margin-left: 15px;
-  margin-right: 15px;
-  color: #000000;
-}
-
-.nav-link {
-  border: 3px outset #a3a3a3;
-  border-radius: 20px;
-  padding: 10px 30px;
-  background-color: #a3a3a3;
-  color: #EEE7E8;
-  transition: 0.3s;
-}
-
-.nav-link:hover {
-  border: 3px outset #FFFFFF;
-  border-radius: 20px;
-  padding: 10px 30px;
-  background-color: #a3a3a3;
-  transition: 0.3s;
-}
-
-#btn {
-  border: 3px outset #FFFFFF;
-  border-radius: 40px;
-  padding: 10px 30px;
-  background-color: #a3a3a3;
-  color: #000000;
-  transition: 0.3s;
-}
-
-#btn:hover {
-  border: 3px inset #FFFFFF;
-  border-radius: 40px;
-  padding: 10px 30px;
-  background-color: #a3a3a3;
-  transition: 0.3s;
+  padding: 0;
+  width: 100%;
 }
 
 .row {
-  margin: auto auto;
+  display: flex;
+  flex-wrap: wrap;
+  margin: 2rem auto;
+  gap: 2rem;
 }
 
 .flexrow {
   display: flex;
   justify-content: space-evenly;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .center-row {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 1rem;
 }
 
+/* Code Blocks */
 code {
-  background-color: #2d2b33;
-  color: #EEE7E8;
-  font-family: 'Courier New', Courier, monospace;
+  background-color: #000000;
+  color: #FFFFFF;
+  font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+  padding: 2px 6px;
+  border-radius: 0;
+  font-size: 0.9em;
+}
+
+pre {
+  background-color: #000000;
+  color: #FFFFFF;
+  padding: 1.5rem;
+  overflow-x: auto;
+  border: 2px solid #000000;
+  margin: 1.5rem 0;
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  font-family: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+}
+
+table th,
+table td {
+  border: 1px solid #000000;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+table th {
+  background-color: #000000;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+table tr:nth-child(even) {
+  background-color: #F5F5F5;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+  border: 2px solid #000000;
+  margin: 1rem 0;
 }
 
 .caption {
-  color: gray;
-  font-size: 16px;
+  color: #666666;
+  font-size: 14px;
   text-align: center;
   font-style: italic;
+  margin-top: 0.5rem;
 }
 
+/* Video */
+video {
+  max-width: 100%;
+  border: 2px solid #000000;
+  margin: 1rem 0;
+}
+
+/* About Me Section */
 #aboutme {
   padding: 20px;
+  background-color: #F5F5F5;
+  border-left: 4px solid #000000;
+  margin: 1rem 0;
+}
+
+/* Typewriter Cursor Effect */
+.typewriter-cursor::after {
+  content: '▎';
+  animation: blink 1s step-end infinite;
+  margin-left: 2px;
+  font-weight: 700;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typewriter-active::after {
+  animation: blink 0.7s step-end infinite;
+}
+
+.typewriter-complete::after {
+  display: none;
+}
+
+/* Grid for Week Cards (Home Page) */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.week-card {
+  border: 2px solid #000000;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.2s ease;
+  background-color: #FFFFFF;
+}
+
+.week-card:hover {
+  background-color: #000000;
+  color: #FFFFFF;
+}
+
+.week-card:hover a {
+  color: #FFFFFF;
+}
+
+.week-card img {
+  width: 100%;
+  border: 1px solid #000000;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+    padding-top: 70px !important;
+  }
+  
+  #content {
+    padding: 1rem;
+  }
+  
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
+  
+  .row {
+    flex-direction: column;
+  }
+  
+  .textcontainer {
+    padding: 5%;
+  }
+}
+
+/* Compatibility with Strapdown */
+.container-fluid.bg-3.text-center {
+  padding: 2rem 1rem;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background-color: #FFFFFF;
+    color: #000000;
+  }
+  
+  nav {
+    display: none;
+  }
+  
+  a {
+    text-decoration: underline;
+    color: #000000;
+  }
 }
