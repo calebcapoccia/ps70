@@ -40,46 +40,46 @@
 
 <p>I started out with the Arduino code we used for the L9110 H, and then I modified it to keep track of the button presses to determine motor direction.</p>
 
-<pre><code class="prettyprint lang-language-arduino prettyprinted">const int A1A = D0;
-const int A1B = D1;
+<pre><code><span class="keyword">const</span> <span class="keyword">int</span> A1A = D0;
+<span class="keyword">const</span> <span class="keyword">int</span> A1B = D1;
 
-const int leftButtonPin = D7;
-const int rightButtonPin = D8;
+<span class="keyword">const</span> <span class="keyword">int</span> leftButtonPin = D7;
+<span class="keyword">const</span> <span class="keyword">int</span> rightButtonPin = D8;
 
-int leftVal;
-int rightVal;
+<span class="keyword">int</span> leftVal;
+<span class="keyword">int</span> rightVal;
 
-void setup() {
-  Serial.begin(9600);
-  pinMode(A1A, OUTPUT);
-  pinMode(A1B, OUTPUT);
-  digitalWrite(A1A, LOW);   // start with the motors off 
-  digitalWrite(A1B, LOW);
-  pinMode(leftButtonPin, INPUT_PULLUP);
-  pinMode(rightButtonPin, INPUT_PULLUP);
+<span class="keyword">void</span> <span class="function">setup</span>() {
+  Serial.<span class="function">begin</span>(<span class="number">9600</span>);
+  <span class="function">pinMode</span>(A1A, OUTPUT);
+  <span class="function">pinMode</span>(A1B, OUTPUT);
+  <span class="function">digitalWrite</span>(A1A, LOW);   <span class="comment">// start with the motors off</span> 
+  <span class="function">digitalWrite</span>(A1B, LOW);
+  <span class="function">pinMode</span>(leftButtonPin, INPUT_PULLUP);
+  <span class="function">pinMode</span>(rightButtonPin, INPUT_PULLUP);
 }
 
-void loop() {
-  // Read button values
-  leftVal = digitalRead(leftButtonPin);
-  rightVal = digitalRead(rightButtonPin);
+<span class="keyword">void</span> <span class="function">loop</span>() {
+  <span class="comment">// Read button values</span>
+  leftVal = <span class="function">digitalRead</span>(leftButtonPin);
+  rightVal = <span class="function">digitalRead</span>(rightButtonPin);
 
-  // If both buttons are pressed or if neither is pressed, stop the motor
-  if ((leftVal == LOW && rightVal == LOW) || (leftVal == HIGH && rightVal == HIGH)) {
-    digitalWrite(A1A, LOW);
-    digitalWrite(A1B, LOW);
+  <span class="comment">// If both buttons are pressed or if neither is pressed, stop the motor</span>
+  <span class="keyword">if</span> ((leftVal == LOW && rightVal == LOW) || (leftVal == HIGH && rightVal == HIGH)) {
+    <span class="function">digitalWrite</span>(A1A, LOW);
+    <span class="function">digitalWrite</span>(A1B, LOW);
   }
 
-  // Left button pressed, move counter-clockwise
-  else if (leftVal == LOW && rightVal == HIGH) {
-    digitalWrite(A1A, HIGH);   
-    digitalWrite(A1B, LOW);
+  <span class="comment">// Left button pressed, move counter-clockwise</span>
+  <span class="keyword">else if</span> (leftVal == LOW && rightVal == HIGH) {
+    <span class="function">digitalWrite</span>(A1A, HIGH);   
+    <span class="function">digitalWrite</span>(A1B, LOW);
   }
 
-  // Right button pressed, move clockwise
-  else {
-    digitalWrite(A1A, LOW);
-    digitalWrite(A1B, HIGH); 
+  <span class="comment">// Right button pressed, move clockwise</span>
+  <span class="keyword">else</span> {
+    <span class="function">digitalWrite</span>(A1A, LOW);
+    <span class="function">digitalWrite</span>(A1B, HIGH); 
   }
 }
 </code></pre>
@@ -106,7 +106,7 @@ void loop() {
 
 <img src="./image1.png" alt="Voltage divider diagram" style="max-width: 600px;">
 
-<p>As we can see in the circuitry and equation above, as long as R_2 = 2 * R_1, we will get the 2/3 ratio needed to scale 5V to 3.3V. Thus, I chose a 20K ohm resistor for R_2 and a 10K ohm resistor for R_1.</p>
+<p>As we can see in the circuitry and equation above, as long as `R_2 = 2 * R_1`, we will get the 2/3 ratio needed to scale 5V to 3.3V. Thus, I chose a 20K ohm resistor for `R_2` and a 10K ohm resistor for `R_1`.</p>
 
 <p>This is the circuit diagram I ended up with:</p>
 
@@ -120,85 +120,85 @@ void loop() {
 
 <p>Here is what I ended up with for code:</p>
 
-<pre><code class="prettyprint lang-language-arduino prettyprinted">const int A1A = D0;
-const int A1B = D1;
+<pre><code><span class="keyword">const</span> <span class="keyword">int</span> A1A = D0;
+<span class="keyword">const</span> <span class="keyword">int</span> A1B = D1;
 
-const int leftButtonPin = D7;
-const int rightButtonPin = D8;
-const int buzzerPin = D9;
+<span class="keyword">const</span> <span class="keyword">int</span> leftButtonPin = D7;
+<span class="keyword">const</span> <span class="keyword">int</span> rightButtonPin = D8;
+<span class="keyword">const</span> <span class="keyword">int</span> buzzerPin = D9;
 
-const int trigPin = D5;
-const int echoPin = D6;
+<span class="keyword">const</span> <span class="keyword">int</span> trigPin = D5;
+<span class="keyword">const</span> <span class="keyword">int</span> echoPin = D6;
 
-int leftVal;
-int rightVal;
+<span class="keyword">int</span> leftVal;
+<span class="keyword">int</span> rightVal;
 
-float duration, distance;
+<span class="keyword">float</span> duration, distance;
 
-void setup() {
-  // Serial.begin(9600);
-  pinMode(A1A, OUTPUT);
-  pinMode(A1B, OUTPUT);
-  pinMode(buzzerPin, OUTPUT);
-  digitalWrite(A1A, LOW);   // start with the motors off 
-  digitalWrite(A1B, LOW);
-  pinMode(leftButtonPin, INPUT_PULLUP);
-  pinMode(rightButtonPin, INPUT_PULLUP);
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
+<span class="keyword">void</span> <span class="function">setup</span>() {
+  <span class="comment">// Serial.begin(9600);</span>
+  <span class="function">pinMode</span>(A1A, OUTPUT);
+  <span class="function">pinMode</span>(A1B, OUTPUT);
+  <span class="function">pinMode</span>(buzzerPin, OUTPUT);
+  <span class="function">digitalWrite</span>(A1A, LOW);   <span class="comment">// start with the motors off</span> 
+  <span class="function">digitalWrite</span>(A1B, LOW);
+  <span class="function">pinMode</span>(leftButtonPin, INPUT_PULLUP);
+  <span class="function">pinMode</span>(rightButtonPin, INPUT_PULLUP);
+  <span class="function">pinMode</span>(trigPin, OUTPUT);
+  <span class="function">pinMode</span>(echoPin, INPUT);
 }
 
-void loop() {
-  // Read button values
-  leftVal = digitalRead(leftButtonPin);
-  rightVal = digitalRead(rightButtonPin);
+<span class="keyword">void</span> <span class="function">loop</span>() {
+  <span class="comment">// Read button values</span>
+  leftVal = <span class="function">digitalRead</span>(leftButtonPin);
+  rightVal = <span class="function">digitalRead</span>(rightButtonPin);
 
-  // If both buttons are pressed or if neither is pressed, stop the motor
-  if ((leftVal == LOW && rightVal == LOW) || (leftVal == HIGH && rightVal == HIGH)) {
-    // Serial.println("Both pressed or neither");
-    digitalWrite(A1A, LOW);
-    digitalWrite(A1B, LOW);
+  <span class="comment">// If both buttons are pressed or if neither is pressed, stop the motor</span>
+  <span class="keyword">if</span> ((leftVal == LOW && rightVal == LOW) || (leftVal == HIGH && rightVal == HIGH)) {
+    <span class="comment">// Serial.println("Both pressed or neither");</span>
+    <span class="function">digitalWrite</span>(A1A, LOW);
+    <span class="function">digitalWrite</span>(A1B, LOW);
   }
 
-  // Left button pressed, move counter-clockwise
-  else if (leftVal == LOW && rightVal == HIGH) {
-    // Serial.println("Left pressed");
-    digitalWrite(A1A, HIGH);   
-    digitalWrite(A1B, LOW);
+  <span class="comment">// Left button pressed, move counter-clockwise</span>
+  <span class="keyword">else if</span> (leftVal == LOW && rightVal == HIGH) {
+    <span class="comment">// Serial.println("Left pressed");</span>
+    <span class="function">digitalWrite</span>(A1A, HIGH);   
+    <span class="function">digitalWrite</span>(A1B, LOW);
   }
 
-  // Right button pressed, move clockwise
-  else {
-    // Serial.println("Right pressed");
-    digitalWrite(A1A, LOW);
-    digitalWrite(A1B, HIGH); 
+  <span class="comment">// Right button pressed, move clockwise</span>
+  <span class="keyword">else</span> {
+    <span class="comment">// Serial.println("Right pressed");</span>
+    <span class="function">digitalWrite</span>(A1A, LOW);
+    <span class="function">digitalWrite</span>(A1B, HIGH); 
   }
 
-  // Send signal
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(8);
-  digitalWrite(trigPin, LOW);
+  <span class="comment">// Send signal</span>
+  <span class="function">digitalWrite</span>(trigPin, LOW);
+  <span class="function">delayMicroseconds</span>(<span class="number">2</span>);
+  <span class="function">digitalWrite</span>(trigPin, HIGH);
+  <span class="function">delayMicroseconds</span>(<span class="number">8</span>);
+  <span class="function">digitalWrite</span>(trigPin, LOW);
 
-  // Receive signal
-  duration = pulseIn(echoPin, HIGH);
-  distance = (duration*.0343)/2 * 10; // Get distance in mm
-  // If an object is detected in the net
-  if (distance < 80 || distance > 1000) {
-    // Ring the buzzer
-    tone(buzzerPin, 2000);
+  <span class="comment">// Receive signal</span>
+  duration = <span class="function">pulseIn</span>(echoPin, HIGH);
+  distance = (duration*.<span class="number">0343</span>)/<span class="number">2</span> * <span class="number">10</span>; <span class="comment">// Get distance in mm</span>
+  <span class="comment">// If an object is detected in the net</span>
+  <span class="keyword">if</span> (distance < <span class="number">80</span> || distance > <span class="number">1000</span>) {
+    <span class="comment">// Ring the buzzer</span>
+    <span class="function">tone</span>(buzzerPin, <span class="number">2000</span>);
   }
-  else {
-    // Turn the buzzer off
-    noTone(buzzerPin);
+  <span class="keyword">else</span> {
+    <span class="comment">// Turn the buzzer off</span>
+    <span class="function">noTone</span>(buzzerPin);
   }
 
-  delay(100);
+  <span class="function">delay</span>(<span class="number">100</span>);
 }
 </code></pre>
 
-<p>At baseline, the sensor hits the mesh net on the other side around ~110mm away, so 80mm was a safe bet for under. I had to check for distance > 1000 because when the ball is right next to the sensor it returns very long distances 2k, 10k.</p>
+<p>At baseline, the sensor hits the mesh net on the other side around ~110mm away, so 80mm was a safe bet for under. I had to check for distance > 1000 because when the ball is right next to the sensor it returns very long distances like 2k, 10k.</p>
 
 <p>Here's the system in action, which I am calling "Blockautomaton Bobby."</p>
 
@@ -210,15 +210,15 @@ void loop() {
 
 <p>Here is the updated code snippet for the pin setup:</p>
 
-<pre><code class="prettyprint lang-language-arduino prettyprinted">const int A1A = D0;
-const int A1B = D1;
+<pre><code><span class="keyword">const</span> <span class="keyword">int</span> A1A = D0;
+<span class="keyword">const</span> <span class="keyword">int</span> A1B = D1;
 
-const int leftButtonPin = D2;
-const int rightButtonPin = D3;
-const int buzzerPin = D4;
+<span class="keyword">const</span> <span class="keyword">int</span> leftButtonPin = D2;
+<span class="keyword">const</span> <span class="keyword">int</span> rightButtonPin = D3;
+<span class="keyword">const</span> <span class="keyword">int</span> buzzerPin = D4;
 
-const int trigPin = D5;
-const int echoPin = D6;
+<span class="keyword">const</span> <span class="keyword">int</span> trigPin = D5;
+<span class="keyword">const</span> <span class="keyword">int</span> echoPin = D6;
 </code></pre>
 
 <p>Along with the updated circuit diagram:</p>
