@@ -32,9 +32,9 @@
 
 <p>After doing some online research and confirming with Kassia, I quickly realized the yellow DC motor has no way of knowing where it's current position is, so would not have a way of mapping the potentiometer to an exact angle without introducing additional hardware.</p>
 
-<p>There were two potential paths I could take: Either use two buttons to control the direction of the yellow DC motor, or I could figure out how to implement a step motor with a potentiometer. For the potentiometer, I would also need to use a button to "reset" the goalie.</p>
+<p>There were two potential paths I could take: Either use two buttons to control the direction of the yellow DC motor, or I could figure out how to implement a stepper motor with a potentiometer. For the potentiometer, I would also need to use a button to "reset" the goalie.</p>
 
-<p>Last week, I learned it is prudent to start with something simple, and then you can expand. Thus, I decided to pursue the two button approach, and then if sufficient time, shift to using the step motor.</p>
+<p>Last week, I learned it is prudent to start with something simple, and then you can expand. Thus, I decided to pursue the two button approach, and then if sufficient time, shift to using the stepper motor.</p>
 
 <h4>Initial Implementation</h4>
 
@@ -86,35 +86,35 @@
 
 <p>Here's a video of the button control working:</p>
 
-<video src="./IMG_8289.mov" controls style="max-width: 600px;"></video>
+<iframe width="640" height="480" src="https://www.youtube.com/embed/Xtw0-0a5usE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 <p>One thing I noticed, as you can see in the video, is that when the motor switches directions, it jumps around a bit, so if I proceeded with the button setup I would need to reprint the board to bring the motor housing closer to the gear so that more of the motor is firmly locked in the housing to prevent it from jumping out of place.</p>
 
-<img src="./IMG_8287.jpg" alt="Motor housing issue" style="max-width: 600px;">
+<img src="./week4_1.jpg" alt="Motor housing issue" style="max-width: 600px;">
 
 <p>I also performed some user testing (thanks Eliza!) to determine if the width of the goalie is sufficient, and it seems like the 10 mm width is still sufficient to block shots, so I decided to not adjust the width for now.</p>
 
 <h4>Extension</h4>
 
-<p>After completing the initial working version of the controllable goalie, I wanted to expand the scope. Given that pursuing the step motor path would entail reprinting the board and motor housing and require using a different power driver for practically the same result (controlling the goalie), I decided it would be much more interesting to extend the project along a different dimension: I would use an sensor to detect when a goal is scored, and then use that detection to activate a buzzer.</p>
+<p>After completing the initial working version of the controllable goalie, I wanted to expand the scope. Given that pursuing the stepper motor path would entail reprinting the board and motor housing and require using a different power driver for practically the same result (controlling the goalie), I decided it would be much more interesting to extend the project along a different dimension: I would use an sensor to detect when a goal is scored, and then use that detection to activate a buzzer.</p>
 
 <p>Because I was continuing with the DC motor, I reprinted the motor housing sides to be much longer, which would then clamp the motor into place. This was much more material efficient than my initial idea of reprinting the base board.</p>
 
-<img src="./image.png" alt="Reprinted motor housing" style="max-width: 600px;">
+<img src="./week4_2.png" alt="Reprinted motor housing" style="max-width: 600px;">
 
 <p>For the buzzer, I chose a small SM buzzer, and followed <a href="https://www.instructables.com/How-to-use-a-Buzzer-Arduino-Tutorial/" target="_blank">this Instructables tutorial</a>. For the sensor I chose an HC-SR04 ultrasonic sensor, and followed <a href="https://projecthub.arduino.cc/Isaac100/getting-started-with-the-hc-sr04-ultrasonic-sensor-7cabe1" target="_blank">this Arduino tutorial</a>. However, given that the echo pin of the sensor is 5V, and we are working with a 3.3V microcontroller, I would need to scale down the voltage before returning the signal to the microcontroller, or else I would risk frying it. Victor recommended using a voltage divider setup, so I followed portions of a <a href="https://www.youtube.com/watch?v=SIc6zj06bhQ&t=117s" target="_blank">YouTube tutorial</a> to understand and set up the divider.</p>
 
-<img src="./image1.png" alt="Voltage divider diagram" style="max-width: 600px;">
+<img src="./week4_3.png" alt="Voltage divider diagram" style="max-width: 400px;">
 
 <p>As we can see in the circuitry and equation above, as long as `R_2 = 2 * R_1`, we will get the 2/3 ratio needed to scale 5V to 3.3V. Thus, I chose a 20K ohm resistor for `R_2` and a 10K ohm resistor for `R_1`.</p>
 
 <p>This is the circuit diagram I ended up with:</p>
 
-<img src="./IMG_9AE668137C77-1.jpeg" alt="Circuit diagram" style="max-width: 600px;">
+<img src="./week4_4.jpeg" alt="Circuit diagram" style="max-width: 600px;">
 
-<p>This is what that looked like on the board:</p>
+<p>This is what that looks like on the board:</p>
 
-<img src="./IMG_8295.jpg" alt="Circuit on board" style="max-width: 600px;">
+<img src="./week4_5.jpg" alt="Circuit on board" style="max-width: 600px;">
 
 <p>To affix the sensor to the goal, I cut small holes in the mesh net to slide the sensor through.</p>
 
@@ -202,7 +202,7 @@
 
 <p>Here's the system in action, which I am calling "Blockautomaton Bobby."</p>
 
-<video src="./IMG_8303.mov" controls style="max-width: 600px;"></video>
+<iframe width="640" height="480" src="https://www.youtube.com/embed/bqGHrA0Pvog" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 <h4>Additional Troubleshooting</h4>
 
@@ -223,7 +223,7 @@
 
 <p>Along with the updated circuit diagram:</p>
 
-<img src="./IMG_CC5C8AA39543-1.jpeg" alt="Updated circuit diagram" style="max-width: 600px;">
+<img src="./week4_6.jpeg" alt="Updated circuit diagram" style="max-width: 600px;">
 
 <p class="margin">   </p>
 
