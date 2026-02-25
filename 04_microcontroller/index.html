@@ -225,6 +225,154 @@
 
 <img src="./week4_6.jpeg" alt="Updated circuit diagram" style="max-width: 600px;">
 
+<h4>Another Extension</h4>
+
+<p>One thing still didn't sit right with me: the 100 ms delay in the loop. Thus, after the Week 5 lab I decided to refactor the entire Arduino file to use a class-based approach to eliminate any latency that the delay introduced. I decided to create classes for the goal and goalie, as those are the two "units" I view in this system.</p>
+
+<pre><code><span class="keyword">const</span> <span class="keyword">int</span> A1A = D0;
+<span class="keyword">const</span> <span class="keyword">int</span> A1B = D1;
+<span class="keyword">const</span> <span class="keyword">int</span> leftButtonPin = D2;
+<span class="keyword">const</span> <span class="keyword">int</span> rightButtonPin = D3;
+<span class="keyword">const</span> <span class="keyword">int</span> buzzerPin = D4;
+<span class="keyword">const</span> <span class="keyword">int</span> trigPin = D5;
+<span class="keyword">const</span> <span class="keyword">int</span> echoPin = D6;
+
+<span class="keyword">class</span> <span class="type">Goalie</span>{
+  <span class="comment">// Member variables</span>
+  <span class="keyword">int</span> a1;
+  <span class="keyword">int</span> b1;
+  <span class="keyword">int</span> leftButton;
+  <span class="keyword">int</span> rightButton;
+
+  <span class="keyword">public</span>:
+    <span class="function">Goalie</span>(<span class="keyword">int</span> setA, <span class="keyword">int</span> setB, <span class="keyword">int</span> setLeft, <span class="keyword">int</span> setRight) {
+      <span class="comment">// Assign member variables</span>
+      a1 = setA;
+      b1 = setB;
+      leftButton = setLeft;
+      rightButton = setRight;
+    }
+
+    <span class="keyword">void</span> <span class="function">begin</span>() {
+      <span class="comment">// Declare pins</span>
+      <span class="function">pinMode</span>(a1, OUTPUT);
+      <span class="function">pinMode</span>(b1, OUTPUT);
+      <span class="function">pinMode</span>(leftButton, INPUT_PULLUP);
+      <span class="function">pinMode</span>(rightButton, INPUT_PULLUP);
+
+      <span class="comment">// Start with motors off</span>
+      <span class="function">digitalWrite</span>(a1, LOW); 
+      <span class="function">digitalWrite</span>(b1, LOW);
+    }
+
+    <span class="keyword">void</span> <span class="function">controlGoalie</span>() {
+      <span class="comment">// Read button values</span>
+      <span class="keyword">int</span> leftVal = <span class="function">digitalRead</span>(leftButtonPin);
+      <span class="keyword">int</span> rightVal = <span class="function">digitalRead</span>(rightButtonPin);
+
+      <span class="comment">// If both buttons are pressed or if neither is pressed, stop the motor</span>
+      <span class="keyword">if</span> ((leftVal == LOW && rightVal == LOW) || (leftVal == HIGH && rightVal == HIGH)) {
+        <span class="function">digitalWrite</span>(A1A, LOW);
+        <span class="function">digitalWrite</span>(A1B, LOW);
+      }
+
+      <span class="comment">// Left button pressed, move counter-clockwise</span>
+      <span class="keyword">else if</span> (leftVal == LOW && rightVal == HIGH) {
+        <span class="function">digitalWrite</span>(A1A, HIGH);
+        <span class="function">digitalWrite</span>(A1B, LOW);
+      }
+
+      <span class="comment">// Right button pressed, move clockwise</span>
+      <span class="keyword">else</span> {
+        <span class="function">digitalWrite</span>(A1A, LOW);
+        <span class="function">digitalWrite</span>(A1B, HIGH); 
+      }
+    }
+};
+
+<span class="keyword">class</span> <span class="type">Goal</span>{
+  <span class="comment">// Member variables</span>
+  <span class="keyword">int</span> trig;
+  <span class="keyword">int</span> echo;
+  <span class="keyword">int</span> buzzer;
+  <span class="keyword">unsigned long</span> delayTime;
+  <span class="keyword">unsigned long</span> previousMillis;
+
+  <span class="keyword">public</span>:
+    <span class="function">Goal</span>(<span class="keyword">int</span> setTrig, <span class="keyword">int</span> setEcho, <span class="keyword">int</span> setBuzzer) {
+      <span class="comment">// Set up member variables</span>
+      trig = setTrig;
+      echo = setEcho;
+      buzzer = setBuzzer;
+    }
+
+    <span class="keyword">void</span> <span class="function">begin</span>() {
+      <span class="comment">// Declare pins</span>
+      <span class="function">pinMode</span>(trig, OUTPUT);
+      <span class="function">pinMode</span>(echo, INPUT);
+
+      <span class="comment">// Start with trig off</span>
+      <span class="function">digitalWrite</span>(trig, LOW);
+
+      previousMillis = <span class="function">millis</span>();
+    }
+
+    <span class="keyword">void</span> <span class="function">runSensor</span>(<span class="keyword">long</span> setDelay) {
+      delayTime = setDelay;
+
+      <span class="comment">// Get current time</span>
+      <span class="keyword">unsigned long</span> currentMillis = <span class="function">millis</span>();
+
+      <span class="comment">// Check if it is time to receive signal</span>
+      <span class="keyword">if</span> ((currentMillis - previousMillis) >= delayTime) {
+        <span class="comment">// Send pulse</span>
+        <span class="function">digitalWrite</span>(trig, LOW);
+        <span class="function">delayMicroseconds</span>(<span class="number">2</span>);
+        <span class="function">digitalWrite</span>(trig, HIGH);
+        <span class="function">delayMicroseconds</span>(<span class="number">8</span>);
+        <span class="function">digitalWrite</span>(trig, LOW);
+
+        <span class="comment">// Receive signal</span>
+        <span class="keyword">float</span> duration = <span class="function">pulseIn</span>(echo, HIGH);
+        <span class="keyword">float</span> distance = (duration*.<span class="number">0343</span>)/<span class="number">2</span> * <span class="number">10</span>; <span class="comment">// Get distance in mm</span>
+        Serial.<span class="function">println</span>(duration);
+
+        <span class="comment">// If an object is detected in the net</span>
+        <span class="keyword">if</span> (distance < <span class="number">80</span> || distance > <span class="number">1000</span>) {
+          <span class="comment">// Ring the buzzer</span>
+          <span class="function">tone</span>(buzzer, <span class="number">2000</span>);
+        }
+        <span class="keyword">else</span> {
+          <span class="comment">// Turn the buzzer off</span>
+          <span class="function">noTone</span>(buzzer);
+        }
+
+        <span class="comment">// Log time and update state</span>
+        previousMillis = currentMillis;
+      }
+    } 
+};
+
+<span class="comment">// Initialize goalie and goal</span>
+<span class="type">Goalie</span> bobby(A1A, A1B, leftButtonPin, rightButtonPin);
+<span class="type">Goal</span> goal(trigPin, echoPin, buzzerPin);
+
+<span class="keyword">void</span> <span class="function">setup</span>() {
+  bobby.<span class="function">begin</span>();
+  goal.<span class="function">begin</span>();
+}
+
+<span class="keyword">void</span> <span class="function">loop</span>() {
+  <span class="comment">// Control goalie</span>
+  bobby.<span class="function">controlGoalie</span>();
+
+  <span class="comment">// Send and receive signal after delay of 100 ms</span>
+  goal.<span class="function">runSensor</span>(<span class="number">100</span>);
+}
+</code></pre>
+
+<p>I added the begin methods because while testing, I ran into issues where the goalie ran, but the goal didn't, and an AI debugging tool explained it might be because C++ constructors could be called before the hardware is ready, so pinMode is called before the pin is available. Thus, by saving this action to run during setup, we are guaranteeing the hardware is ready.</p>
+
 <p class="margin">   </p>
 
 </div>
