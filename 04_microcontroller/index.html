@@ -183,7 +183,7 @@
 
   <span class="comment">// Receive signal</span>
   duration = <span class="function">pulseIn</span>(echoPin, HIGH);
-  distance = (duration*.<span class="number">0343</span>)/<span class="number">2</span> * <span class="number">10</span>; <span class="comment">// Get distance in mm</span>
+  distance = (duration\*.<span class="number">0343</span>)/<span class="number">2</span> \* <span class="number">10</span>; <span class="comment">// Get distance in mm</span>
   <span class="comment">// If an object is detected in the net</span>
   <span class="keyword">if</span> (distance < <span class="number">80</span> || distance > <span class="number">1000</span>) {
     <span class="comment">// Ring the buzzer</span>
@@ -334,7 +334,7 @@
 
         <span class="comment">// Receive signal</span>
         <span class="keyword">float</span> duration = <span class="function">pulseIn</span>(echo, HIGH);
-        <span class="keyword">float</span> distance = (duration*.<span class="number">0343</span>)/<span class="number">2</span> * <span class="number">10</span>; <span class="comment">// Get distance in mm</span>
+        <span class="keyword">float</span> distance = (duration\*.<span class="number">0343</span>)/<span class="number">2</span> \* <span class="number">10</span>; <span class="comment">// Get distance in mm</span>
         Serial.<span class="function">println</span>(duration);
 
         <span class="comment">// If an object is detected in the net</span>
