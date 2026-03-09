@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speech Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 24px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 12px 20px;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    #status {
+      color: #555;
+    }
+
+    #output {
+      min-height: 2em;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #f8f8f8;
+    }
+  </style>
+</head>
+<body>
+  <h1>Speech Test</h1>
+
+  <button id="startBtn">Start Speech</button>
+
+  <p id="status">Status: idle</p>
+  <p id="output">Transcript will appear here.</p>
+
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const statusEl = document.getElementById("status");
+    const outputEl = document.getElementById("output");
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      statusEl.textContent = "Status: speech recognition is not supported in this browser.";
+      startBtn.disabled = true;
+    } else {
+      const recognition = new SpeechRecognition();
+
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.continuous = false;
+
+      startBtn.addEventListener("click", () => {
+        outputEl.textContent = "";
+        statusEl.textContent = "Status: listening...";
+        recognition.start();
+      });
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        outputEl.textContent = transcript;
+        statusEl.textContent = "Status: done";
+      };
+
+      recognition.onerror = (event) => {
+        statusEl.textContent = `Status: error - ${event.error}`;
+      };
+
+      recognition.onend = () => {
+        if (statusEl.textContent === "Status: listening...") {
+          statusEl.textContent = "Status: ended without result";
+        }
+      };
+    }
+  </script>
+</body>
+</html>
