@@ -70,10 +70,23 @@
         recognition.start();
       });
 
-      recognition.onresult = (event) => {
+      recognition.onresult = async (event) => {
         const transcript = event.results[0][0].transcript;
         outputEl.textContent = transcript;
-        statusEl.textContent = "Status: done";
+        statusEl.textContent = "Status: sending to ESP32...";
+
+        try {
+          const response = await fetch(
+            `http://cardisplay.local/message?text=${encodeURIComponent(transcript)}`
+          );
+
+          const text = await response.text();
+          statusEl.textContent = "Status: sent successfully";
+          console.log(text);
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = "Status: failed to send to ESP32";
+        }
       };
 
       recognition.onerror = (event) => {
