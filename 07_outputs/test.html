@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Speech Test</title>
+  <title>Car Display Control</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -15,17 +15,27 @@
     button {
       font-size: 18px;
       padding: 12px 20px;
-      margin-bottom: 16px;
+      margin: 10px 0;
       cursor: pointer;
+      width: 100%;
     }
 
-    p {
-      font-size: 18px;
-      line-height: 1.5;
+    input {
+      font-size: 16px;
+      padding: 8px;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
     }
 
     #status {
       color: #555;
+      margin-top: 10px;
     }
 
     #output {
@@ -34,69 +44,112 @@
       border: 1px solid #ccc;
       border-radius: 8px;
       background: #f8f8f8;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>Speech Test</h1>
+  <h1>Car Display Control</h1>
 
-  <button id="startBtn">Start Speech</button>
+  <button id="startBtn">Speak</button>
+
+  <label>Message</label>
+  <input type="text" id="textInput" placeholder="Type message here" />
+
+  <label>Repeat Count</label>
+  <input type="number" id="repeatInput" value="1" min="1" />
+
+  <label>Pause (ms)</label>
+  <input type="number" id="pauseInput" value="0" min="0" />
+
+  <label>Speed</label>
+  <input type="number" id="speedInput" value="50" min="1" />
+
+  <button id="sendBtn">Send</button>
 
   <p id="status">Status: idle</p>
   <p id="output">Transcript will appear here.</p>
 
   <script>
+    const ESP32_HOST = "cardisplay.local";
+
     const startBtn = document.getElementById("startBtn");
+    const sendBtn = document.getElementById("sendBtn");
     const statusEl = document.getElementById("status");
     const outputEl = document.getElementById("output");
 
+    const textInput = document.getElementById("textInput");
+    const repeatInput = document.getElementById("repeatInput");
+    const pauseInput = document.getElementById("pauseInput");
+    const speedInput = document.getElementById("speedInput");
+
+    async function sendToESP32(message) {
+      const repeat = repeatInput.value || 1;
+      const pause = pauseInput.value || 0;
+      const speed = speedInput.value || 50;
+
+      const params = new URLSearchParams({
+        text: message,
+        repeat: repeat,
+        pause: pause,
+        speed: speed
+      });
+
+      statusEl.textContent = "Status: sending...";
+
+      try {
+        const response = await fetch(
+          `http://${ESP32_HOST}/message?${params.toString()}`
+        );
+
+        if (!response.ok) {
+          throw new Error("HTTP error " + response.status);
+        }
+
+        const text = await response.text();
+        console.log(text);
+        statusEl.textContent = "Status: sent successfully";
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Status: failed to send";
+      }
+    }
+
+    // Manual send
+    sendBtn.addEventListener("click", () => {
+      const message = textInput.value;
+      if (!message) return;
+      sendToESP32(message);
+    });
+
+    // Speech recognition
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      statusEl.textContent = "Status: speech recognition is not supported in this browser.";
+      statusEl.textContent = "Speech recognition not supported.";
       startBtn.disabled = true;
     } else {
       const recognition = new SpeechRecognition();
-
       recognition.lang = "en-US";
       recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
       recognition.continuous = false;
 
       startBtn.addEventListener("click", () => {
         outputEl.textContent = "";
-        statusEl.textContent = "Status: listening...";
+        statusEl.textContent = "Listening...";
         recognition.start();
       });
 
-      recognition.onresult = async (event) => {
+      recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         outputEl.textContent = transcript;
-        statusEl.textContent = "Status: sending to ESP32...";
-
-        try {
-          const response = await fetch(
-            `http://cardisplay.local/message?text=${encodeURIComponent(transcript)}`
-          );
-
-          const text = await response.text();
-          statusEl.textContent = "Status: sent successfully";
-          console.log(text);
-        } catch (err) {
-          console.error(err);
-          statusEl.textContent = "Status: failed to send to ESP32";
-        }
+        textInput.value = transcript; // populate text box
+        sendToESP32(transcript);
       };
 
       recognition.onerror = (event) => {
-        statusEl.textContent = `Status: error - ${event.error}`;
-      };
-
-      recognition.onend = () => {
-        if (statusEl.textContent === "Status: listening...") {
-          statusEl.textContent = "Status: ended without result";
-        }
+        statusEl.textContent = `Error: ${event.error}`;
       };
     }
   </script>
