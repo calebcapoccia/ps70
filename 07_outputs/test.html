@@ -56,6 +56,9 @@
   <label>Message</label>
   <input type="text" id="textInput" placeholder="Type message here" />
 
+  <label>ESP32 Address</label>
+  <input type="text" id="hostInput" value="cardisplay.local" placeholder="cardisplay.local or IP" />
+
   <label>Repeat Count</label>
   <input type="number" id="repeatInput" value="1" min="1" />
 
@@ -78,12 +81,14 @@
     const statusEl = document.getElementById("status");
     const outputEl = document.getElementById("output");
 
+    const hostInput = document.getElementById("hostInput");
     const textInput = document.getElementById("textInput");
     const repeatInput = document.getElementById("repeatInput");
     const pauseInput = document.getElementById("pauseInput");
     const speedInput = document.getElementById("speedInput");
 
     async function sendToESP32(message) {
+      const host = hostInput.value || "cardisplay.local";
       const repeat = repeatInput.value || 1;
       const pause = pauseInput.value || 0;
       const speed = speedInput.value || 50;
@@ -99,7 +104,7 @@
 
       try {
         const response = await fetch(
-          `http://${ESP32_HOST}/message?${params.toString()}`
+          `http://${host}/message?${params.toString()}`
         );
 
         if (!response.ok) {
