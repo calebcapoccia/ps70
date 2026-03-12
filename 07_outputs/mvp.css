@@ -1,0 +1,41 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 24px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+button {
+  font-size: 18px;
+  padding: 12px 20px;
+  margin: 10px 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+input {
+  font-size: 16px;
+  padding: 8px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-top: 10px;
+}
+
+#status {
+  color: #555;
+  margin-top: 10px;
+}
+
+#output {
+  min-height: 2em;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #f8f8f8;
+  margin-top: 10px;
+}

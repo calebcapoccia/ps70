@@ -4,49 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Car Display Control</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 24px;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    button {
-      font-size: 18px;
-      padding: 12px 20px;
-      margin: 10px 0;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    input {
-      font-size: 16px;
-      padding: 8px;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
-
-    #status {
-      color: #555;
-      margin-top: 10px;
-    }
-
-    #output {
-      min-height: 2em;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      background: #f8f8f8;
-      margin-top: 10px;
-    }
-  </style>
+  <link rel="stylesheet" href="mvp.css" />
 </head>
 <body>
   <h1>Car Display Control</h1>
@@ -66,7 +24,7 @@
   <input type="number" id="pauseInput" value="0" min="0" />
 
   <label>Speed</label>
-  <input type="number" id="speedInput" value="50" min="1" />
+  <input type="number" id="speedInput" value="25" min="1" />
 
   <button id="sendBtn">Send</button>
 
@@ -91,7 +49,7 @@
       const host = hostInput.value || "cardisplay.local";
       const repeat = repeatInput.value || 1;
       const pause = pauseInput.value || 0;
-      const speed = speedInput.value || 50;
+      const speed = speedInput.value || 25;
 
       const params = new URLSearchParams({
         text: message,
@@ -143,18 +101,29 @@
       startBtn.addEventListener("click", () => {
         outputEl.textContent = "";
         statusEl.textContent = "Listening...";
+        startBtn.textContent = "Listening...";
+        startBtn.disabled = true;
         recognition.start();
       });
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         outputEl.textContent = transcript;
-        textInput.value = transcript; // populate text box
+        textInput.value = transcript;
+        startBtn.textContent = "Speak";
+        startBtn.disabled = false;
         sendToESP32(transcript);
       };
 
       recognition.onerror = (event) => {
         statusEl.textContent = `Error: ${event.error}`;
+        startBtn.textContent = "Speak";
+        startBtn.disabled = false;
+      };
+
+      recognition.onend = () => {
+        startBtn.textContent = "Speak";
+        startBtn.disabled = false;
       };
     }
   </script>
