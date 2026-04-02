@@ -1,0 +1,62 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, backgroundColor: '#f5f5f5' },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center' },
+  section: { marginBottom: 20 },
+  label: { marginBottom: 8, fontSize: 16, fontWeight: '500' },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: '#fff',
+    fontSize: 16,
+  },
+  deviceRow: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    backgroundColor: '#fff',
+  },
+  deviceName: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
+  deviceId: { fontSize: 12, color: '#666' },
+  emptyText: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 16,
+    marginTop: 40,
+    paddingHorizontal: 20,
+  },
+  connectedSection: {
+    backgroundColor: '#e8f5e9',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  connectedLabel: {
+    fontSize: 14,
+    color: '#2e7d32',
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  connectedDevice: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1b5e20',
+    marginBottom: 16,
+  },
+  messageSection: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+});
