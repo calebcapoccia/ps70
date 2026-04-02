@@ -12,6 +12,7 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
+import Voice from '@react-native-voice/voice';
 import { styles } from './styles';
 
 const SERVICE_UUID = '6da6814e-13a5-4144-96a0-6db8d3b343c9';
@@ -28,6 +29,7 @@ export default function App() {
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [message, setMessage] = useState('Hi there');
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -36,15 +38,41 @@ export default function App() {
           PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
           PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
         ]);
         console.log('Permissions:', granted);
       }
     };
     
     checkPermissions();
+
+    // Set up Voice event handlers
+    Voice.onSpeechStart = () => {
+      console.log('Speech started');
+      setIsListening(true);
+    };
+
+    Voice.onSpeechEnd = () => {
+      console.log('Speech ended');
+      setIsListening(false);
+    };
+
+    Voice.onSpeechResults = (event) => {
+      console.log('Speech results:', event.value);
+      if (event.value && event.value.length > 0) {
+        setMessage(event.value[0]);
+      }
+    };
+
+    Voice.onSpeechError = (event) => {
+      console.error('Speech error:', event.error);
+      setIsListening(false);
+      Alert.alert('Speech Recognition Error', event.error?.message || 'Could not recognize speech');
+    };
     
     return () => {
       bleManager.destroy();
+      Voice.destroy().then(Voice.removeAllListeners);
     };
   }, [bleManager]);
 
@@ -118,6 +146,25 @@ export default function App() {
     }
   };
 
+  const startVoiceRecognition = async () => {
+    try {
+      await Voice.start('en-US');
+      setIsListening(true);
+    } catch (error) {
+      console.error('Voice start error:', error);
+      Alert.alert('Error', 'Could not start voice recognition');
+    }
+  };
+
+  const stopVoiceRecognition = async () => {
+    try {
+      await Voice.stop();
+      setIsListening(false);
+    } catch (error) {
+      console.error('Voice stop error:', error);
+    }
+  };
+
   const sendMessage = async () => {
     if (!connectedDevice) {
       Alert.alert('Not connected', 'Connect to the ESP32 first.');
@@ -186,13 +233,24 @@ export default function App() {
 
           <View style={styles.messageSection}>
             <Text style={styles.label}>Message</Text>
-            <TextInput
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Enter message to display"
-              style={styles.input}
-              autoCapitalize="sentences"
-            />
+            {isListening && (
+              <Text style={styles.listeningText}>🎤 Listening...</Text>
+            )}
+            <View style={styles.inputRow}>
+              <TextInput
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Enter message to display"
+                style={styles.inputWithMic}
+                autoCapitalize="sentences"
+              />
+              <TouchableOpacity
+                style={[styles.micButton, isListening && styles.micButtonActive]}
+                onPress={isListening ? stopVoiceRecognition : startVoiceRecognition}
+              >
+                <Text style={{ fontSize: 24 }}>{isListening ? '⏹' : '🎤'}</Text>
+              </TouchableOpacity>
+            </View>
             <Button title="Send to Display" onPress={sendMessage} />
           </View>
         </>

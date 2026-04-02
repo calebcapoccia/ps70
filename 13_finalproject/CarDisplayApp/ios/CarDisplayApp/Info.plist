@@ -35,6 +35,10 @@
 	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>This app connects to the car display over Bluetooth.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app uses the microphone to convert your speech to text for messages.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app uses speech recognition to convert your voice to text for messages.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>RCTNewArchEnabled</key>
