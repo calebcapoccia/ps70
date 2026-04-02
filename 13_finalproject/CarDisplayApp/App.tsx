@@ -30,6 +30,7 @@ export default function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [message, setMessage] = useState('Hi there');
   const [isListening, setIsListening] = useState(false);
+  const speechTimeoutRef = React.useRef<number | null>(null);
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -52,9 +53,9 @@ export default function App() {
       setIsListening(true);
     };
 
-    Voice.onSpeechEnd = () => {
+    Voice.onSpeechEnd = async () => {
       console.log('Speech ended');
-      setIsListening(false);
+      // Don't stop immediately - let the timeout handle it
     };
 
     Voice.onSpeechResults = (event) => {
@@ -62,15 +63,53 @@ export default function App() {
       if (event.value && event.value.length > 0) {
         setMessage(event.value[0]);
       }
+      // Set timeout to stop listening after receiving results
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
+      speechTimeoutRef.current = setTimeout(async () => {
+        try {
+          await Voice.stop();
+          setIsListening(false);
+        } catch (error) {
+          console.error('Error stopping voice:', error);
+        }
+      }, 1500); // Stop 1.5 seconds after last result
+    };
+
+    Voice.onSpeechPartialResults = (event) => {
+      console.log('Partial results:', event.value);
+      // Update message with partial results for live feedback
+      if (event.value && event.value.length > 0) {
+        setMessage(event.value[0]);
+      }
+      // Reset timeout on each partial result (user is still talking)
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
+      speechTimeoutRef.current = setTimeout(async () => {
+        try {
+          await Voice.stop();
+          setIsListening(false);
+        } catch (error) {
+          console.error('Error stopping voice:', error);
+        }
+      }, 2000); // Stop 2 seconds after last partial result
     };
 
     Voice.onSpeechError = (event) => {
       console.error('Speech error:', event.error);
       setIsListening(false);
-      Alert.alert('Speech Recognition Error', event.error?.message || 'Could not recognize speech');
+      // Only show alert for non-1101 errors (1101 is just a timeout/end signal)
+      if (event.error?.code !== '1101') {
+        Alert.alert('Speech Recognition Error', event.error?.message || 'Could not recognize speech');
+      }
     };
     
     return () => {
+      if (speechTimeoutRef.current) {
+        clearTimeout(speechTimeoutRef.current);
+      }
       bleManager.destroy();
       Voice.destroy().then(Voice.removeAllListeners);
     };
