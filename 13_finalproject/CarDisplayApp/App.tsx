@@ -31,6 +31,8 @@ export default function App() {
   const [message, setMessage] = useState('Hi there');
   const [isListening, setIsListening] = useState(false);
   const speechTimeoutRef = React.useRef<number | null>(null);
+  const isManualDisconnectRef = React.useRef(false);
+  const hasShownDisconnectAlertRef = React.useRef(false);
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -161,24 +163,34 @@ export default function App() {
   };
 
   const handleDisconnect = async (isManual: boolean = false) => {
-    if (!connectedDevice) return;
     
     try {
-      if (isManual) {
+      if (isManual && connectedDevice) {
+        isManualDisconnectRef.current = true;
+        hasShownDisconnectAlertRef.current = false;
         await bleManager.cancelDeviceConnection(connectedDevice.id);
       }
+      
+      // Only show alert if: not manual, manual flag not set, and haven't already shown alert
+      const shouldShowAlert = !isManual && !isManualDisconnectRef.current && !hasShownDisconnectAlertRef.current;
+            
       setConnectedDevice(null);
       
-      // Show alert only for unexpected disconnects
-      if (!isManual) {
+      if (shouldShowAlert) {
+        hasShownDisconnectAlertRef.current = true;
         Alert.alert('Disconnected', 'Connection to device was lost.');
       }
+      
+      // Reset flags after a short delay
+      setTimeout(() => {
+        isManualDisconnectRef.current = false;
+        hasShownDisconnectAlertRef.current = false;
+      }, 1000);
     } catch (error) {
       console.error('Disconnect error:', error);
-      // If already disconnected, just clear state
-      if (error instanceof Error && error.message.includes('disconnected')) {
-        setConnectedDevice(null);
-      }
+      setConnectedDevice(null);
+      isManualDisconnectRef.current = false;
+      hasShownDisconnectAlertRef.current = false;
     }
   };
 
