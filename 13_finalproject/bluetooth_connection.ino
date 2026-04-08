@@ -200,6 +200,8 @@ void setup() {
   pService->start();
 
   BLEAdvertising *pAdvertising = pServer->getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(true);
   pAdvertising->start();
 }
 

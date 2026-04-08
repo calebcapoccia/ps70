@@ -132,7 +132,7 @@ export default function App() {
     }
 
     await bleManager.startDeviceScan(
-      null, // Scan for all devices to debug
+      null, // Scan all devices
       null,
       (error, device) => {
         if (error) {
@@ -144,7 +144,18 @@ export default function App() {
 
         if (!device) return;
 
-        console.log('Found device:', device.name, device.id);
+        // Filter by service UUID if available in advertisement
+        const services = device.serviceUUIDs || [];
+        if (services.length > 0 && !services.includes(SERVICE_UUID)) {
+          return; // Skip devices that advertise services but not ours
+        }
+
+        // Also filter by name as a fallback
+        if (!device.name?.includes('CarDisplay')) {
+          return;
+        }
+
+        console.log('Found CarDisplay device:', device.name, device.id, 'RSSI:', device.rssi, 'Services:', services);
 
         setDevices(prev => {
           const alreadySeen = prev.some(d => d.id === device.id);
@@ -159,7 +170,7 @@ export default function App() {
         await bleManager.stopDeviceScan();
       } catch {}
       setIsScanning(false);
-    }, 10000); // Increased to 10 seconds
+    }, 10000);
   };
 
   const handleDisconnect = async (isManual: boolean = false) => {
@@ -280,15 +291,22 @@ export default function App() {
           <FlatList
             data={devices}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.deviceRow} onPress={() => connectToDevice(item)}>
-                <Text style={styles.deviceName}>{item.name || 'Unnamed device'}</Text>
-                <Text style={styles.deviceId}>{item.id}</Text>
-              </TouchableOpacity>
-            )}
+            renderItem={({ item }) => {
+              const rssi = item.rssi || 0;
+              const signalStrength = rssi > -60 ? 'Strong' : rssi > -80 ? 'Medium' : 'Weak';
+              const signalIcon = rssi > -60 ? '📶' : rssi > -80 ? '📶' : '📶';
+              
+              return (
+                <TouchableOpacity style={styles.deviceRow} onPress={() => connectToDevice(item)}>
+                  <Text style={styles.deviceName}>{item.name || 'Unnamed device'}</Text>
+                  <Text style={styles.deviceId}>{item.id}</Text>
+                  <Text style={styles.deviceId}>{signalIcon} {rssi} dBm ({signalStrength})</Text>
+                </TouchableOpacity>
+              );
+            }}
             ListEmptyComponent={
               <Text style={styles.emptyText}>
-                {isScanning ? 'Searching for devices...' : 'No devices found. Tap scan to search.'}
+                {isScanning ? 'Searching for CarDisplay devices...' : 'No CarDisplay devices found. Tap scan to search.'}
               </Text>
             }
           />
