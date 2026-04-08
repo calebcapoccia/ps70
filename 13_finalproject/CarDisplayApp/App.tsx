@@ -3,7 +3,6 @@ import {
   SafeAreaView,
   View,
   Text,
-  Button,
   TextInput,
   FlatList,
   TouchableOpacity,
@@ -13,7 +12,7 @@ import {
 } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 import Voice from '@react-native-voice/voice';
-import { styles } from './styles';
+import tw from 'twrnc';
 
 const SERVICE_UUID = '6da6814e-13a5-4144-96a0-6db8d3b343c9';
 const CHARACTERISTIC_UUID = '82b3bdc2-ccf2-4063-b820-9a66322f8234';
@@ -275,18 +274,23 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Car Display BLE</Text>
+    <SafeAreaView style={tw`flex-1 bg-gray-50`}>
+      <View style={tw`bg-blue-600 px-6 py-8 shadow-lg`}>
+        <Text style={tw`text-3xl font-bold text-white text-center`}>🚗 Car Display</Text>
+        <Text style={tw`text-sm text-blue-100 text-center mt-1`}>Bluetooth Control</Text>
+      </View>
 
       {!connectedDevice && (
-        <>
-          <View style={styles.section}>
-            <Button
-              title={isScanning ? 'Scanning...' : 'Scan for CarDisplay'}
-              onPress={startScan}
-              disabled={isScanning}
-            />
-          </View>
+        <View style={tw`flex-1 px-4 pt-6`}>
+          <TouchableOpacity
+            style={tw`rounded-xl py-4 px-6 shadow-md mb-6 ${isScanning ? 'bg-gray-400' : 'bg-blue-600'}`}
+            onPress={startScan}
+            disabled={isScanning}
+          >
+            <Text style={tw`text-white text-center text-lg font-semibold`}>
+              {isScanning ? '🔍 Scanning...' : '📡 Scan for CarDisplay'}
+            </Text>
+          </TouchableOpacity>
 
           <FlatList
             data={devices}
@@ -294,56 +298,85 @@ export default function App() {
             renderItem={({ item }) => {
               const rssi = item.rssi || 0;
               const signalStrength = rssi > -60 ? 'Strong' : rssi > -80 ? 'Medium' : 'Weak';
-              const signalIcon = rssi > -60 ? '📶' : rssi > -80 ? '📶' : '📶';
+              const signalIcon = rssi > -60 ? '📶' : rssi > -80 ? '📶' : '�';
+              const signalColor = rssi > -60 ? 'text-green-600' : rssi > -80 ? 'text-yellow-600' : 'text-red-600';
               
               return (
-                <TouchableOpacity style={styles.deviceRow} onPress={() => connectToDevice(item)}>
-                  <Text style={styles.deviceName}>{item.name || 'Unnamed device'}</Text>
-                  <Text style={styles.deviceId}>{item.id}</Text>
-                  <Text style={styles.deviceId}>{signalIcon} {rssi} dBm ({signalStrength})</Text>
+                <TouchableOpacity
+                  style={tw`bg-white rounded-xl p-5 mb-3 shadow-sm border border-gray-100`}
+                  onPress={() => connectToDevice(item)}
+                >
+                  <Text style={tw`text-lg font-semibold text-gray-900 mb-1`}>
+                    {item.name || 'Unnamed device'}
+                  </Text>
+                  <Text style={tw`text-xs text-gray-500 mb-2`}>{item.id}</Text>
+                  <View style={tw`flex-row items-center`}>
+                    <Text style={tw`text-sm font-medium ${signalColor}`}>
+                      {signalIcon} {rssi} dBm ({signalStrength})
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               );
             }}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>
-                {isScanning ? 'Searching for CarDisplay devices...' : 'No CarDisplay devices found. Tap scan to search.'}
-              </Text>
+              <View style={tw`items-center justify-center py-16 px-6`}>
+                <Text style={tw`text-gray-400 text-center text-base`}>
+                  {isScanning ? '🔍 Searching for CarDisplay devices...' : '📱 No devices found\n\nTap scan to search for CarDisplay'}
+                </Text>
+              </View>
             }
           />
-        </>
+        </View>
       )}
 
       {connectedDevice && (
-        <>
-          <View style={styles.connectedSection}>
-            <Text style={styles.connectedLabel}>✓ Connected to</Text>
-            <Text style={styles.connectedDevice}>{connectedDevice.name || connectedDevice.id}</Text>
-            <Button title="Disconnect" onPress={() => handleDisconnect(true)} color="#ff3b30" />
+        <View style={tw`flex-1 px-4 pt-6`}>
+          <View style={tw`bg-green-50 rounded-2xl p-6 mb-6 border-2 border-green-200 shadow-sm`}>
+            <View style={tw`items-center mb-4`}>
+              <Text style={tw`text-sm font-medium text-green-700 mb-2`}>✓ Connected to</Text>
+              <Text style={tw`text-2xl font-bold text-green-900`}>
+                {connectedDevice.name || connectedDevice.id}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={tw`bg-red-500 rounded-xl py-3 px-6 shadow-md`}
+              onPress={() => handleDisconnect(true)}
+            >
+              <Text style={tw`text-white text-center font-semibold`}>Disconnect</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.messageSection}>
-            <Text style={styles.label}>Message</Text>
+          <View style={tw`bg-white rounded-2xl p-6 shadow-lg border border-gray-100`}>
+            <Text style={tw`text-lg font-semibold text-gray-900 mb-4`}>💬 Message</Text>
             {isListening && (
-              <Text style={styles.listeningText}>🎤 Listening...</Text>
+              <View style={tw`bg-red-50 rounded-lg p-3 mb-3 border border-red-200`}>
+                <Text style={tw`text-red-600 text-center font-medium`}>🎤 Listening...</Text>
+              </View>
             )}
-            <View style={styles.inputRow}>
+            <View style={tw`flex-row items-center mb-4`}>
               <TextInput
                 value={message}
                 onChangeText={setMessage}
                 placeholder="Enter message to display"
-                style={styles.inputWithMic}
+                style={tw`flex-1 border border-gray-300 rounded-xl px-4 py-3 bg-gray-50 text-base text-gray-900 mr-2`}
+                placeholderTextColor="#9CA3AF"
                 autoCapitalize="sentences"
               />
               <TouchableOpacity
-                style={[styles.micButton, isListening && styles.micButtonActive]}
+                style={tw`w-12 h-12 rounded-full items-center justify-center shadow-md ${isListening ? 'bg-red-500' : 'bg-blue-600'}`}
                 onPress={isListening ? stopVoiceRecognition : startVoiceRecognition}
               >
-                <Text style={{ fontSize: 24 }}>{isListening ? '⏹' : '🎤'}</Text>
+                <Text style={tw`text-2xl`}>{isListening ? '⏹' : '🎤'}</Text>
               </TouchableOpacity>
             </View>
-            <Button title="Send to Display" onPress={sendMessage} />
+            <TouchableOpacity
+              style={tw`bg-blue-600 rounded-xl py-4 px-6 shadow-md`}
+              onPress={sendMessage}
+            >
+              <Text style={tw`text-white text-center text-lg font-semibold`}>📤 Send to Display</Text>
+            </TouchableOpacity>
           </View>
-        </>
+        </View>
       )}
     </SafeAreaView>
   );
