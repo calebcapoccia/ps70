@@ -160,6 +160,28 @@ export default function App() {
     }, 10000); // Increased to 10 seconds
   };
 
+  const handleDisconnect = async (isManual: boolean = false) => {
+    if (!connectedDevice) return;
+    
+    try {
+      if (isManual) {
+        await bleManager.cancelDeviceConnection(connectedDevice.id);
+      }
+      setConnectedDevice(null);
+      
+      // Show alert only for unexpected disconnects
+      if (!isManual) {
+        Alert.alert('Disconnected', 'Connection to device was lost.');
+      }
+    } catch (error) {
+      console.error('Disconnect error:', error);
+      // If already disconnected, just clear state
+      if (error instanceof Error && error.message.includes('disconnected')) {
+        setConnectedDevice(null);
+      }
+    }
+  };
+
   const connectToDevice = async (device: Device) => {
     try {
       await bleManager.stopDeviceScan();
@@ -167,21 +189,20 @@ export default function App() {
       const connected = await device.connect();
       const discovered = await connected.discoverAllServicesAndCharacteristics();
 
+      // Monitor for disconnection
+      bleManager.onDeviceDisconnected(discovered.id, (error, disconnectedDevice) => {
+        console.log('Device disconnected:', disconnectedDevice?.name || disconnectedDevice?.id);
+        if (error) {
+          console.error('Disconnection error:', error);
+        }
+        handleDisconnect(false); // false = unexpected disconnect
+      });
+
       setConnectedDevice(discovered);
       Alert.alert('Connected', `Connected to ${discovered.name ?? discovered.id}`);
     } catch (error) {
       console.error('Connection error:', error);
       Alert.alert('Connection failed', 'Could not connect to device.');
-    }
-  };
-
-  const disconnect = async () => {
-    if (!connectedDevice) return;
-    try {
-      await bleManager.cancelDeviceConnection(connectedDevice.id);
-      setConnectedDevice(null);
-    } catch (error) {
-      console.error('Disconnect error:', error);
     }
   };
 
@@ -267,7 +288,7 @@ export default function App() {
           <View style={styles.connectedSection}>
             <Text style={styles.connectedLabel}>✓ Connected to</Text>
             <Text style={styles.connectedDevice}>{connectedDevice.name || connectedDevice.id}</Text>
-            <Button title="Disconnect" onPress={disconnect} color="#ff3b30" />
+            <Button title="Disconnect" onPress={() => handleDisconnect(true)} color="#ff3b30" />
           </View>
 
           <View style={styles.messageSection}>
