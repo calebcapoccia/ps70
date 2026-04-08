@@ -13,6 +13,7 @@ import {
 import { BleManager, Device } from 'react-native-ble-plx';
 import Voice from '@react-native-voice/voice';
 import tw from 'twrnc';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const SERVICE_UUID = '6da6814e-13a5-4144-96a0-6db8d3b343c9';
 const CHARACTERISTIC_UUID = '82b3bdc2-ccf2-4063-b820-9a66322f8234';
@@ -276,8 +277,11 @@ export default function App() {
   return (
     <SafeAreaView style={tw`flex-1 bg-gray-50`}>
       <View style={tw`bg-blue-600 px-6 py-8 shadow-lg`}>
-        <Text style={tw`text-3xl font-bold text-white text-center`}>🚗 Car Display</Text>
-        <Text style={tw`text-sm text-blue-100 text-center mt-1`}>Bluetooth Control</Text>
+        <View style={tw`flex-row items-center justify-center mb-2`}>
+          <Icon name="car-sport" size={32} color="white" style={tw`mr-2`} />
+          <Text style={tw`text-3xl font-bold text-white`}>Car Display</Text>
+        </View>
+        <Text style={tw`text-sm text-blue-100 text-center`}>Bluetooth Control</Text>
       </View>
 
       {!connectedDevice && (
@@ -287,9 +291,12 @@ export default function App() {
             onPress={startScan}
             disabled={isScanning}
           >
-            <Text style={tw`text-white text-center text-lg font-semibold`}>
-              {isScanning ? '🔍 Scanning...' : '📡 Scan for CarDisplay'}
-            </Text>
+            <View style={tw`flex-row items-center justify-center`}>
+              <Icon name={isScanning ? 'search' : 'bluetooth'} size={20} color="white" style={tw`mr-2`} />
+              <Text style={tw`text-white text-lg font-semibold`}>
+                {isScanning ? 'Scanning...' : 'Scan for CarDisplay'}
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <FlatList
@@ -298,7 +305,7 @@ export default function App() {
             renderItem={({ item }) => {
               const rssi = item.rssi || 0;
               const signalStrength = rssi > -60 ? 'Strong' : rssi > -80 ? 'Medium' : 'Weak';
-              const signalIcon = rssi > -60 ? '📶' : rssi > -80 ? '📶' : '�';
+              const signalIconName = rssi > -60 ? 'wifi' : rssi > -80 ? 'wifi-outline' : 'cellular-outline';
               const signalColor = rssi > -60 ? 'text-green-600' : rssi > -80 ? 'text-yellow-600' : 'text-red-600';
               
               return (
@@ -311,8 +318,9 @@ export default function App() {
                   </Text>
                   <Text style={tw`text-xs text-gray-500 mb-2`}>{item.id}</Text>
                   <View style={tw`flex-row items-center`}>
+                    <Icon name={signalIconName} size={16} color={signalColor === 'text-green-600' ? '#16a34a' : signalColor === 'text-yellow-600' ? '#ca8a04' : '#dc2626'} style={tw`mr-1`} />
                     <Text style={tw`text-sm font-medium ${signalColor}`}>
-                      {signalIcon} {rssi} dBm ({signalStrength})
+                      {rssi} dBm ({signalStrength})
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -320,8 +328,9 @@ export default function App() {
             }}
             ListEmptyComponent={
               <View style={tw`items-center justify-center py-16 px-6`}>
+                <Icon name={isScanning ? 'search' : 'phone-portrait-outline'} size={48} color="#9ca3af" style={tw`mb-4`} />
                 <Text style={tw`text-gray-400 text-center text-base`}>
-                  {isScanning ? '🔍 Searching for CarDisplay devices...' : '📱 No devices found\n\nTap scan to search for CarDisplay'}
+                  {isScanning ? 'Searching for CarDisplay devices...' : 'No devices found\n\nTap scan to search for CarDisplay'}
                 </Text>
               </View>
             }
@@ -333,7 +342,10 @@ export default function App() {
         <View style={tw`flex-1 px-4 pt-6`}>
           <View style={tw`bg-green-50 rounded-2xl p-6 mb-6 border-2 border-green-200 shadow-sm`}>
             <View style={tw`items-center mb-4`}>
-              <Text style={tw`text-sm font-medium text-green-700 mb-2`}>✓ Connected to</Text>
+              <View style={tw`flex-row items-center mb-2`}>
+                <Icon name="checkmark-circle" size={20} color="#15803d" style={tw`mr-1`} />
+                <Text style={tw`text-sm font-medium text-green-700`}>Connected to</Text>
+              </View>
               <Text style={tw`text-2xl font-bold text-green-900`}>
                 {connectedDevice.name || connectedDevice.id}
               </Text>
@@ -342,15 +354,24 @@ export default function App() {
               style={tw`bg-red-500 rounded-xl py-3 px-6 shadow-md`}
               onPress={() => handleDisconnect(true)}
             >
-              <Text style={tw`text-white text-center font-semibold`}>Disconnect</Text>
+              <View style={tw`flex-row items-center justify-center`}>
+                <Icon name="close-circle-outline" size={20} color="white" style={tw`mr-2`} />
+                <Text style={tw`text-white font-semibold`}>Disconnect</Text>
+              </View>
             </TouchableOpacity>
           </View>
 
           <View style={tw`bg-white rounded-2xl p-6 shadow-lg border border-gray-100`}>
-            <Text style={tw`text-lg font-semibold text-gray-900 mb-4`}>💬 Message</Text>
+            <View style={tw`flex-row items-center mb-4`}>
+              <Icon name="chatbubble-ellipses-outline" size={24} color="#111827" style={tw`mr-2`} />
+              <Text style={tw`text-lg font-semibold text-gray-900`}>Message</Text>
+            </View>
             {isListening && (
               <View style={tw`bg-red-50 rounded-lg p-3 mb-3 border border-red-200`}>
-                <Text style={tw`text-red-600 text-center font-medium`}>🎤 Listening...</Text>
+                <View style={tw`flex-row items-center justify-center`}>
+                  <Icon name="mic" size={20} color="#dc2626" style={tw`mr-2`} />
+                  <Text style={tw`text-red-600 font-medium`}>Listening...</Text>
+                </View>
               </View>
             )}
             <View style={tw`flex-row items-center mb-4`}>
@@ -366,14 +387,17 @@ export default function App() {
                 style={tw`w-12 h-12 rounded-full items-center justify-center shadow-md ${isListening ? 'bg-red-500' : 'bg-blue-600'}`}
                 onPress={isListening ? stopVoiceRecognition : startVoiceRecognition}
               >
-                <Text style={tw`text-2xl`}>{isListening ? '⏹' : '🎤'}</Text>
+                <Icon name={isListening ? 'stop' : 'mic'} size={24} color="white" />
               </TouchableOpacity>
             </View>
             <TouchableOpacity
               style={tw`bg-blue-600 rounded-xl py-4 px-6 shadow-md`}
               onPress={sendMessage}
             >
-              <Text style={tw`text-white text-center text-lg font-semibold`}>📤 Send to Display</Text>
+              <View style={tw`flex-row items-center justify-center`}>
+                <Icon name="send" size={20} color="white" style={tw`mr-2`} />
+                <Text style={tw`text-white text-lg font-semibold`}>Send to Display</Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
