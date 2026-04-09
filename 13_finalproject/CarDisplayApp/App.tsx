@@ -28,7 +28,7 @@ export default function App() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [message, setMessage] = useState('Hi there');
+  const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const speechTimeoutRef = React.useRef<number | null>(null);
   const isManualDisconnectRef = React.useRef(false);
@@ -155,7 +155,7 @@ export default function App() {
           return;
         }
 
-        console.log('Found CarDisplay device:', device.name, device.id, 'RSSI:', device.rssi, 'Services:', services);
+        console.log('Found Kachow device:', device.name, device.id, 'RSSI:', device.rssi, 'Services:', services);
 
         setDevices(prev => {
           const alreadySeen = prev.some(d => d.id === device.id);
@@ -267,7 +267,7 @@ export default function App() {
         CHARACTERISTIC_UUID,
         toBase64(payload)
       );
-      Alert.alert('Sent', payload);
+      Alert.alert('Sent', message);
     } catch (error) {
       console.error('Write error:', error);
       Alert.alert('Send failed', 'Could not write to characteristic.');
@@ -279,7 +279,7 @@ export default function App() {
       <View style={tw`bg-blue-600 px-6 py-8 shadow-lg`}>
         <View style={tw`flex-row items-center justify-center mb-2`}>
           <Icon name="car-sport" size={32} color="white" style={tw`mr-2`} />
-          <Text style={tw`text-3xl font-bold text-white`}>Car Display</Text>
+          <Text style={tw`text-3xl font-bold text-white`}>Kachow</Text>
         </View>
         <Text style={tw`text-sm text-blue-100 text-center`}>Bluetooth Control</Text>
       </View>
@@ -294,7 +294,7 @@ export default function App() {
             <View style={tw`flex-row items-center justify-center`}>
               <Icon name={isScanning ? 'search' : 'bluetooth'} size={20} color="white" style={tw`mr-2`} />
               <Text style={tw`text-white text-lg font-semibold`}>
-                {isScanning ? 'Scanning...' : 'Scan for CarDisplay'}
+                {isScanning ? 'Scanning...' : 'Scan for display'}
               </Text>
             </View>
           </TouchableOpacity>
@@ -330,7 +330,7 @@ export default function App() {
               <View style={tw`items-center justify-center py-16 px-6`}>
                 <Icon name={isScanning ? 'search' : 'phone-portrait-outline'} size={48} color="#9ca3af" style={tw`mb-4`} />
                 <Text style={tw`text-gray-400 text-center text-base`}>
-                  {isScanning ? 'Searching for CarDisplay devices...' : 'No devices found\n\nTap scan to search for CarDisplay'}
+                  {isScanning ? 'Searching for Kachow devices...' : 'No devices found\n\nTap scan to search for Kachow'}
                 </Text>
               </View>
             }
@@ -379,9 +379,13 @@ export default function App() {
                 value={message}
                 onChangeText={setMessage}
                 placeholder="Enter message to display"
-                style={tw`flex-1 border border-gray-300 rounded-xl px-4 py-3 bg-gray-50 text-base text-gray-900 mr-2`}
+                style={[
+                  tw`flex-1 border border-gray-300 rounded-xl px-4 bg-gray-50 text-base text-gray-900 mr-2`,
+                  { paddingTop: 10, paddingBottom: 14 }
+                ]}
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="sentences"
+                textAlignVertical="center"
               />
               <TouchableOpacity
                 style={tw`w-12 h-12 rounded-full items-center justify-center shadow-md ${isListening ? 'bg-red-500' : 'bg-blue-600'}`}
