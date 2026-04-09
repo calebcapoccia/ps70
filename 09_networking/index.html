@@ -46,7 +46,7 @@
 <p>I started out by modifying the <a href="https://nathanmelenbrink.github.io/lab/networking/huzzah3.html" target="_blank">BLE tutorial code</a> to use Serial print text messages upon writes. I downloaded nRF to communicate with it.</p>
 
 <pre><code><span class="keyword">class</span> MyCallbacks: <span class="keyword">public</span> BLECharacteristicCallbacks {
-    <span class="keyword">void</span> onWrite(BLECharacteristic *pCharacteristic) {
+    <span class="keyword">void</span> onWrite(BLECharacteristic &#42;pCharacteristic) {
       String message = pCharacteristic->getValue();
       Serial.println(message);
     }
@@ -58,7 +58,7 @@
 
 <pre><code><span class="comment">// Callback for bluetooth message to display</span>
 <span class="keyword">class</span> DisplayCallbacks : <span class="keyword">public</span> BLECharacteristicCallbacks {
-  <span class="keyword">void</span> onWrite(BLECharacteristic *pCharacteristic) <span class="keyword">override</span> {
+  <span class="keyword">void</span> onWrite(BLECharacteristic &#42;pCharacteristic) <span class="keyword">override</span> {
     String message = pCharacteristic->getValue();
 
     <span class="keyword">if</span> (message.length() == <span class="number">0</span>) <span class="keyword">return</span>;
@@ -84,20 +84,20 @@
 
   <span class="comment">// Begin BLE connection</span>
   BLEDevice::init(<span class="string">"CarDisplay"</span>);
-  BLEServer *pServer = BLEDevice::createServer();
+  BLEServer &#42;pServer = BLEDevice::createServer();
 
-  BLEService *pService = pServer->createService(SERVICE_UUID);
+  BLEService &#42;pService = pServer->createService(SERVICE&#95;UUID);
 
-  BLECharacteristic *pCharacteristic = pService->createCharacteristic(
-                                         CHARACTERISTIC_UUID,
-                                         BLECharacteristic::PROPERTY_WRITE
+  BLECharacteristic &#42;pCharacteristic = pService->createCharacteristic(
+                                         CHARACTERISTIC&#95;UUID,
+                                         BLECharacteristic::PROPERTY&#95;WRITE
                                        );
 
   pCharacteristic->setCallbacks(<span class="keyword">new</span> DisplayCallbacks());
   pCharacteristic->setValue(<span class="string">""</span>);
   pService->start();
 
-  BLEAdvertising *pAdvertising = pServer->getAdvertising();
+  BLEAdvertising &#42;pAdvertising = pServer->getAdvertising();
   pAdvertising->start();
 }</code></pre>
 
@@ -109,7 +109,7 @@
 
 <pre><code><span class="comment">// Callback for bluetooth message to display</span>
 <span class="keyword">class</span> DisplayCallbacks : <span class="keyword">public</span> BLECharacteristicCallbacks {
-  <span class="keyword">void</span> onWrite(BLECharacteristic *pCharacteristic) <span class="keyword">override</span> {
+  <span class="keyword">void</span> onWrite(BLECharacteristic &#42;pCharacteristic) <span class="keyword">override</span> {
     String payload = pCharacteristic->getValue();
 
     <span class="keyword">if</span> (payload.length() == <span class="number">0</span>) <span class="keyword">return</span>;
@@ -122,7 +122,7 @@
 
     <span class="keyword">if</span> (error) {
       Serial.print(<span class="string">"JSON parse failed: "</span>);
-      Serial.println(error.c_str());
+      Serial.println(error.c&#95;str());
       <span class="keyword">return</span>;
     }
 
@@ -152,12 +152,12 @@
 <p>In setup, I added <code>pServer->setCallbacks(new DisplayServerCallbacks());</code> and then I added the following callbacks:</p>
 
 <pre><code><span class="keyword">class</span> DisplayServerCallbacks : <span class="keyword">public</span> BLEServerCallbacks {
-  <span class="keyword">void</span> onConnect(BLEServer* pServer) <span class="keyword">override</span> {
+  <span class="keyword">void</span> onConnect(BLEServer&#42; pServer) <span class="keyword">override</span> {
     deviceConnected = <span class="keyword">true</span>;
     Serial.println(<span class="string">"Device connected"</span>);
   }
 
-  <span class="keyword">void</span> onDisconnect(BLEServer* pServer) <span class="keyword">override</span> {
+  <span class="keyword">void</span> onDisconnect(BLEServer&#42; pServer) <span class="keyword">override</span> {
     deviceConnected = <span class="keyword">false</span>;
     Serial.println(<span class="string">"Device disconnected"</span>);
     
@@ -181,7 +181,7 @@
 
 <p>Additionally, I started tracking the connection ID so that we can forcibly disconnect Bluetooth clients later on if I wanted to.</p>
 
-<pre><code><span class="keyword">uint16_t</span> connectionId = <span class="number">0</span>;</code></pre>
+<pre><code><span class="keyword">uint16&#95;t</span> connectionId = <span class="number">0</span>;</code></pre>
 
 <h4>Building the Application</h4>
 
@@ -229,8 +229,8 @@ cd ios && pod install</code></pre>
   <span class="keyword">const</span> payload = JSON.stringify({ text: message, repeat: <span class="number">1</span>, pause: <span class="number">0</span>, speed: <span class="number">25</span> });
 
   <span class="keyword">await</span> connectedDevice?.writeCharacteristicWithResponseForService(
-    SERVICE_UUID,
-    CHARACTERISTIC_UUID,
+    SERVICE&#95;UUID,
+    CHARACTERISTIC&#95;UUID,
     toBase64(payload)
   );
 };</code></pre>
@@ -283,7 +283,7 @@ cd ios && pod install</code></pre>
     }
 
     <span class="keyword">void</span> begin() {
-      pinMode(pin, INPUT_PULLUP);
+      pinMode(pin, INPUT&#95;PULLUP);
     }
 
     <span class="keyword">bool</span> isReset() {
@@ -309,7 +309,7 @@ cd ios && pod install</code></pre>
 
 <p>I updated the app to scan for resets, as well as search based on service UUID, which required advertising UUID.</p>
 
-<pre><code>pAdvertising->addServiceUUID(SERVICE_UUID);
+<pre><code>pAdvertising->addServiceUUID(SERVICE&#95;UUID);
 pAdvertising->setScanResponse(<span class="keyword">true</span>);</code></pre>
 
 <p>To physically add the button, I realized that because my ESP32 only has one GND, I would need to get creative. I soldered another wire to the GND for the button so the button would connect to the GND wire for the display and to the ESP32 GND.</p>
