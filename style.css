@@ -114,6 +114,7 @@ pre code {
   line-height: 1.6;
   display: block;
   white-space: pre;
+  font-style: normal;
 }
 
 /* Syntax highlighting colors - Light theme */
