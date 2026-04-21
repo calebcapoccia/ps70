@@ -111,6 +111,24 @@ Server will start at `http://localhost:8000`
 - Maximum 500 dots per job
 - Simple patterns work best
 
+### Precision Test Mode
+
+For calibration and precision testing:
+
+1. Switch to "Manual Drawing" tab
+2. Click "⭕ Precision Test" button
+3. System generates a 40mm radius circle with center dot
+4. Click "Send to Machine"
+5. Measure the actual embossed circle:
+   - **Radius**: Measure from center dot to circle edge
+   - **Expected**: 40mm
+   - **Percent Error**: `|measured - 40| / 40 × 100%`
+6. Verify center dot is at exact center of circle
+
+**Calibration Requirements:**
+- ✅ Home position consistent on each power-on (auto-homes on startup)
+- ✅ Precision test: circle with marked center for error calculation
+
 ## Communication Protocol
 
 ### Commands (Server → ESP32)

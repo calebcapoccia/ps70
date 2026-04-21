@@ -266,6 +266,62 @@ function clearCanvas() {
     log('Canvas cleared', 'info');
 }
 
+function generatePrecisionTest() {
+    // Clear existing dots
+    drawingDots = [];
+    
+    // Circle parameters - centered in work area with reasonable size
+    const centerX = WORK_WIDTH / 2;  // 85mm
+    const centerY = WORK_HEIGHT / 2; // 125mm
+    const radius = 40; // 40mm radius circle
+    
+    log('Generating precision test pattern...', 'info');
+    
+    // Generate circle dots (every 5mm around circumference)
+    const circumference = 2 * Math.PI * radius;
+    const numDots = Math.floor(circumference / GRID_SPACING); // Approximately one dot every 5mm
+    
+    for (let i = 0; i < numDots; i++) {
+        const angle = (i / numDots) * 2 * Math.PI;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        
+        // Snap to grid
+        const snapped = snapToGrid(x, y);
+        
+        // Check if already exists (avoid duplicates)
+        const exists = drawingDots.some(dot => dot.x === snapped.x && dot.y === snapped.y);
+        if (!exists && snapped.x >= 0 && snapped.x <= WORK_WIDTH - DOT_SIZE && 
+            snapped.y >= 0 && snapped.y <= WORK_HEIGHT - DOT_SIZE) {
+            drawingDots.push(snapped);
+        }
+    }
+    
+    // Add center dot
+    const centerSnapped = snapToGrid(centerX, centerY);
+    drawingDots.push(centerSnapped);
+    
+    // Redraw and show preview
+    redrawCanvas();
+    updateDotCount();
+    
+    const mirror = document.getElementById('mirrorDraw').checked;
+    const dots = mirror ? drawingDots.map(d => [WORK_WIDTH - d.x, d.y]) : drawingDots.map(d => [d.x, d.y]);
+    showPreview(dots);
+    
+    log(`✓ Precision test generated: ${drawingDots.length} dots`, 'success');
+    log(`Circle: radius=${radius}mm, center=(${centerX}, ${centerY})`, 'info');
+    log('Measure the actual circle and center to calculate error', 'info');
+}
+
+function clearCanvas() {
+    drawingDots = [];
+    redrawCanvas();
+    updateDotCount();
+    document.getElementById('previewSection').style.display = 'none';
+    log('Canvas cleared', 'info');
+}
+
 // Preview
 function showPreview(dots) {
     currentDots = dots;

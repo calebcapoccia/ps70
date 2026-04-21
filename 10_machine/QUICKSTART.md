@@ -78,6 +78,15 @@ Starting Flask server on http://localhost:8000
 4. Click "Send to Machine"
 5. Flip paper to see raised dots
 
+### Precision Test (for calibration):
+1. Switch to "🎨 Manual Drawing" tab
+2. Click "⭕ Precision Test" button
+3. System generates 40mm radius circle with center dot
+4. Click "Send to Machine"
+5. Measure actual circle radius and calculate error:
+   - **Percent Error** = `|measured - 40| / 40 × 100%`
+6. Verify center dot is at exact center
+
 ---
 
 ## Troubleshooting

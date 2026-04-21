@@ -84,8 +84,9 @@ void home() {
 }
 
 void moveTo(float x_mm, float y_mm) {
-  long targetX = x_mm * xMmtoSteps;
-  long targetY = y_mm * yMmtoSteps;
+  // Swap X and Y to match physical machine orientation
+  long targetX = y_mm * xMmtoSteps;
+  long targetY = x_mm * yMmtoSteps;
   
   Serial.printf("Moving to (%.2f, %.2f) mm = (%ld, %ld) steps\n", 
                 x_mm, y_mm, targetX, targetY);
@@ -293,7 +294,13 @@ void setup() {
   Serial.println("  STOP          - Stop execution");
   Serial.println("  CLEAR         - Clear dot queue");
   Serial.println("  STATUS        - Get current position");
-  Serial.println("========================================");
+  Serial.println("========================================\n");
+  
+  // Auto-home on startup
+  Serial.println("Auto-homing on startup...");
+  delay(1000);  // Brief delay to ensure everything is initialized
+  home();
+  
   Serial.println("Ready for commands!\n");
 }
 
