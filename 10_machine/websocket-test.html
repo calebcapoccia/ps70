@@ -262,6 +262,14 @@
       <p>GitHub Pages uses HTTPS. Connecting to an insecure WebSocket (ws://) may be blocked by your browser's mixed content policy. Check the console for errors.</p>
     </div>
     
+    <div class="warning-box" style="background: #d1ecf1; border-color: #0c5460;">
+      <h4 style="color: #0c5460;">📝 Setup Instructions</h4>
+      <p style="color: #0c5460;">1. Upload websocket-test-simple.ino to your ESP32<br>
+      2. Open Serial Monitor (115200 baud)<br>
+      3. Copy the IP address shown (e.g., 192.168.1.123)<br>
+      4. Enter that IP address below and click Connect</p>
+    </div>
+    
     <div class="status-section">
       <div class="status-indicator">
         <div class="status-dot" id="statusDot"></div>
@@ -272,8 +280,8 @@
     
     <div class="connection-section">
       <div class="input-group">
-        <label for="espIp">ESP32 IP Address</label>
-        <input type="text" id="espIp" value="192.168.4.1" placeholder="e.g., 192.168.4.1">
+        <label for="espIp">ESP32 IP Address (from Serial Monitor)</label>
+        <input type="text" id="espIp" value="" placeholder="e.g., 192.168.1.123">
       </div>
       
       <div class="button-group">
