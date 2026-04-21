@@ -439,20 +439,32 @@ async function sendToMachine() {
         return;
     }
     
+    const optimize = document.getElementById('optimizePath').checked;
+    
     log(`Sending ${currentDots.length} dots to machine...`, 'info');
+    if (optimize) {
+        log('⚡ Path optimization enabled', 'info');
+    }
     document.getElementById('sendBtn').disabled = true;
     
     try {
         const response = await fetch('/api/send/dots', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({dots: currentDots})
+            body: JSON.stringify({dots: currentDots, optimize: optimize})
         });
         
         const data = await response.json();
         
         if (data.success) {
             log(`✓ Sent ${data.dots_sent} dots to machine`, 'success');
+            
+            // Show optimization stats if available
+            if (data.optimization) {
+                const opt = data.optimization;
+                log(`⚡ Optimized path: ${opt.optimized_distance}mm (saved ${opt.savings_percent}% / ${opt.savings_mm}mm)`, 'success');
+            }
+            
             log('Machine is executing...', 'info');
             showProgress(data.dots_sent);
         } else {

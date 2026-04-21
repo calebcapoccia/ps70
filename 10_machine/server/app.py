@@ -8,6 +8,7 @@ import websocket
 import threading
 import time
 from braille_converter import braille_to_coords, get_text_info, word_wrap
+from optimizer import optimize_dots, compare_optimization
 
 app = Flask(__name__)
 
@@ -150,12 +151,26 @@ def api_convert_text():
 
 @app.route('/api/send/dots', methods=['POST'])
 def api_send_dots():
-    """Send dots to ESP32"""
+    """Send dots to ESP32 with optimization"""
     data = request.json
     dots = data.get('dots', [])
+    optimize = data.get('optimize', True)  # Default to optimized
     
     if not dots:
         return jsonify({"success": False, "error": "No dots provided"})
+    
+    # Optimize dot order if requested
+    if optimize:
+        original_dots = dots.copy()
+        dots = optimize_dots(dots, start_pos=(0, 0))
+        stats = compare_optimization(original_dots, dots)
+        print(f"\n=== OPTIMIZATION ===")
+        print(f"Original distance: {stats['original_distance']} mm")
+        print(f"Optimized distance: {stats['optimized_distance']} mm")
+        print(f"Savings: {stats['savings_percent']}% ({stats['savings_mm']} mm)")
+        print(f"===================\n")
+    else:
+        stats = None
     
     # Clear existing queue
     send_to_esp32("CLEAR")
@@ -175,10 +190,15 @@ def api_send_dots():
     # Start execution
     result = send_to_esp32("RUN")
     
-    return jsonify({
+    response = {
         "success": True,
         "dots_sent": len(dots)
-    })
+    }
+    
+    if stats:
+        response['optimization'] = stats
+    
+    return jsonify(response)
 
 @app.route('/api/home', methods=['POST'])
 def api_home():
