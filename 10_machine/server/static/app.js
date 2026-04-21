@@ -12,6 +12,8 @@ let currentMode = 'text';
 let connected = false;
 let currentDots = [];
 let drawingDots = [];
+let drawMode = 'pen'; // 'pen' or 'eraser'
+let isDrawing = false;
 
 // Canvas setup
 let drawCanvas, drawCtx, previewCanvas, previewCtx;
@@ -170,16 +172,57 @@ async function convertText() {
 }
 
 // Drawing Mode
+function setDrawMode(mode) {
+    drawMode = mode;
+    
+    // Update button states
+    document.getElementById('penBtn').classList.toggle('active', mode === 'pen');
+    document.getElementById('eraserBtn').classList.toggle('active', mode === 'eraser');
+    
+    // Update cursor
+    drawCanvas.style.cursor = mode === 'pen' ? 'crosshair' : 'not-allowed';
+    
+    log(`Switched to ${mode} mode`, 'info');
+}
+
 function setupDrawCanvas() {
     drawGrid(drawCtx);
     
-    drawCanvas.addEventListener('click', (e) => {
+    // Mouse down - start drawing
+    drawCanvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
         const rect = drawCanvas.getBoundingClientRect();
         const x = (e.clientX - rect.left) / SCALE;
         const y = (e.clientY - rect.top) / SCALE;
-        
-        addDrawingDot(x, y);
+        handleDrawing(x, y);
     });
+    
+    // Mouse move - continue drawing if mouse is down
+    drawCanvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        const rect = drawCanvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / SCALE;
+        const y = (e.clientY - rect.top) / SCALE;
+        handleDrawing(x, y);
+    });
+    
+    // Mouse up - stop drawing
+    drawCanvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+    });
+    
+    // Mouse leave - stop drawing if mouse leaves canvas
+    drawCanvas.addEventListener('mouseleave', () => {
+        isDrawing = false;
+    });
+}
+
+function handleDrawing(x, y) {
+    if (drawMode === 'pen') {
+        addDrawingDot(x, y);
+    } else if (drawMode === 'eraser') {
+        removeDrawingDot(x, y);
+    }
 }
 
 function drawGrid(ctx) {
@@ -222,7 +265,6 @@ function addDrawingDot(x, y) {
     // Check bounds
     if (snapped.x < 0 || snapped.x > WORK_WIDTH - DOT_SIZE || 
         snapped.y < 0 || snapped.y > WORK_HEIGHT - DOT_SIZE) {
-        log('Dot out of bounds', 'warning');
         return;
     }
     
@@ -240,6 +282,27 @@ function addDrawingDot(x, y) {
     const mirror = document.getElementById('mirrorDraw').checked;
     const dots = mirror ? drawingDots.map(d => [WORK_WIDTH - d.x, d.y]) : drawingDots.map(d => [d.x, d.y]);
     showPreview(dots);
+}
+
+function removeDrawingDot(x, y) {
+    const snapped = snapToGrid(x, y);
+    
+    // Find and remove dot at this position
+    const index = drawingDots.findIndex(dot => dot.x === snapped.x && dot.y === snapped.y);
+    if (index !== -1) {
+        drawingDots.splice(index, 1);
+        redrawCanvas();
+        updateDotCount();
+        
+        // Update preview
+        if (drawingDots.length > 0) {
+            const mirror = document.getElementById('mirrorDraw').checked;
+            const dots = mirror ? drawingDots.map(d => [WORK_WIDTH - d.x, d.y]) : drawingDots.map(d => [d.x, d.y]);
+            showPreview(dots);
+        } else {
+            document.getElementById('previewSection').style.display = 'none';
+        }
+    }
 }
 
 function redrawCanvas() {

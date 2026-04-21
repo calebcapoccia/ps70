@@ -65,7 +65,11 @@
         <!-- Drawing Mode -->
         <div id="drawMode" class="mode-content">
             <div class="canvas-section">
-                <p class="help-text">Click to place dots • Dots snap to 5mm grid</p>
+                <p class="help-text">Click and drag to draw • Dots snap to 5mm grid</p>
+                <div class="drawing-tools">
+                    <button onclick="setDrawMode('pen')" id="penBtn" class="tool-btn active">✏️ Pen</button>
+                    <button onclick="setDrawMode('eraser')" id="eraserBtn" class="tool-btn">🧹 Eraser</button>
+                </div>
                 <canvas id="drawCanvas" width="340" height="500"></canvas>
                 <div class="canvas-controls">
                     <button onclick="clearCanvas()">Clear Canvas</button>

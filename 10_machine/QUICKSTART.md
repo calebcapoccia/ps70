@@ -73,10 +73,12 @@ Starting Flask server on http://localhost:8000
 
 ### Drawing Mode Test:
 1. Switch to "🎨 Manual Drawing" tab
-2. Click 3-4 times on canvas to place dots
-3. Preview updates automatically
-4. Click "Send to Machine"
-5. Flip paper to see raised dots
+2. Use "✏️ Pen" mode (default)
+3. Click and drag on canvas to draw a simple pattern
+4. Try "🧹 Eraser" to remove dots
+5. Preview updates automatically
+6. Click "Send to Machine"
+7. Flip paper to see raised dots
 
 ### Precision Test (for calibration):
 1. Switch to "🎨 Manual Drawing" tab

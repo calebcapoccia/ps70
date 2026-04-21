@@ -99,15 +99,19 @@ Server will start at `http://localhost:8000`
 ### Manual Drawing Mode
 
 1. Switch to "Manual Drawing" tab
-2. Click on canvas to place dots
-3. Dots automatically snap to 5mm grid
+2. Select tool:
+   - **✏️ Pen**: Click and drag to add dots
+   - **🧹 Eraser**: Click and drag to remove dots
+3. Draw your pattern (dots snap to 5mm grid)
 4. Enable "Mirror" for flip-over embossing
 5. Preview updates automatically
 6. Click "Send to Machine"
 7. Flip paper to see raised pattern
 
 **Tips:**
+- Click and hold while dragging to draw continuous lines
 - Dots snap to 5mm grid to prevent overlap
+- Switch between pen and eraser as needed
 - Maximum 500 dots per job
 - Simple patterns work best
 

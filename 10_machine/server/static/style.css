@@ -213,6 +213,33 @@ button:disabled {
     margin-bottom: 10px;
 }
 
+.drawing-tools {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tool-btn {
+    padding: 10px 20px;
+    border: 2px solid #ddd;
+    background: white;
+    color: #666;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.tool-btn:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.tool-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
 canvas {
     border: 2px solid #333;
     background: white;
