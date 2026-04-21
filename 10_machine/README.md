@@ -2,6 +2,32 @@
 
 A drawing machine that creates embossed Braille text and tactile art by pressing 3mm dots into paper against a silicone backing.
 
+## 🎯 Two Implementations Available
+
+This project offers **two complete web server implementations**:
+
+### 1. **Flask Server** (Python)
+Classic Python implementation with Flask framework.
+- **Location**: `server/`
+- **Port**: 8000
+- **Documentation**: [server/README.md](server/README.md)
+- **Quick Start**: [server/QUICKSTART.md](server/QUICKSTART.md)
+
+### 2. **Ruby on Brailles** 💎⠃⠗⠇ (Rails)
+Ruby on Rails implementation with the same functionality.
+- **Location**: `rails_server/`
+- **Port**: 3000
+- **Documentation**: [rails_server/README.md](rails_server/README.md)
+- **Quick Start**: [rails_server/QUICKSTART.md](rails_server/QUICKSTART.md)
+
+**Both implementations:**
+- ✅ Connect to the same ESP32 hardware
+- ✅ Provide identical functionality
+- ✅ Use the same communication protocol
+- ✅ Share the same frontend interface
+
+Choose based on your preferred language/framework!
+
 ## System Overview
 
 - **Work Area**: 170mm × 250mm
@@ -12,8 +38,8 @@ A drawing machine that creates embossed Braille text and tactile art by pressing
 ## Architecture
 
 ```
-Browser UI ←→ Python Flask Server ←→ ESP32 ←→ Machine
-  (Input)     (Braille Conversion)    (Motors)
+Browser UI ←→ Web Server (Flask OR Rails) ←→ ESP32 ←→ Machine
+  (Input)     (Braille Conversion)           (Motors)
 ```
 
 ## Hardware Setup
@@ -34,9 +60,7 @@ Browser UI ←→ Python Flask Server ←→ ESP32 ←→ Machine
 - X Limit: D8
 - Y Limit: D7
 
-## Software Setup
-
-### 1. ESP32 Firmware
+## ESP32 Firmware Setup
 
 **Upload `braille_machine.ino` to ESP32:**
 
@@ -52,105 +76,6 @@ WiFi connected!
 IP address: 192.168.1.123
 WebSocket: ws://192.168.1.123/ws
 ```
-
-### 2. Python Server
-
-**Install dependencies:**
-
-```bash
-cd server
-pip install -r requirements.txt
-```
-
-**Run server:**
-
-```bash
-python app.py
-```
-
-Server will start at `http://localhost:8000`
-
-### 3. Web Interface
-
-1. Open browser to `http://localhost:8000`
-2. Enter ESP32 IP address (from Serial Monitor)
-3. Click "Connect"
-4. Run "Home" command to initialize machine
-
-## Usage
-
-### Text to Braille Mode
-
-1. Switch to "Text to Braille" tab
-2. Type your message (max 80 characters)
-3. Enable "Auto word-wrap" for automatic line breaks
-4. Enable "Mirror" for flip-over embossing (recommended)
-5. Click "Convert to Braille"
-6. Review preview
-7. Click "Send to Machine"
-8. Wait for completion
-9. Flip paper to see raised Braille dots
-
-**Example:**
-- Input: "HELLO WORLD"
-- Output: 2 lines, ~30 dots
-- Time: ~30 seconds
-
-### Manual Drawing Mode
-
-1. Switch to "Manual Drawing" tab
-2. Select tool:
-   - **✏️ Pen**: Click and drag to add dots
-   - **🧹 Eraser**: Click and drag to remove dots
-3. Draw your pattern (dots snap to 5mm grid)
-4. Enable "Mirror" for flip-over embossing
-5. Preview updates automatically
-6. Click "Send to Machine"
-7. Flip paper to see raised pattern
-
-**Tips:**
-- Click and hold while dragging to draw continuous lines
-- Dots snap to 5mm grid to prevent overlap
-- Switch between pen and eraser as needed
-- Maximum 500 dots per job
-- Simple patterns work best
-- **⚡ Path optimization** is enabled by default (saves 30-50% execution time)
-
-### Path Optimization
-
-The system automatically optimizes dot placement order using a **nearest neighbor algorithm**:
-
-- **Enabled (default)**: Dots are reordered to minimize travel distance
-- **Disabled**: Dots execute in the order they were added
-- **Typical savings**: 30-50% reduction in total travel distance
-- **Algorithm**: Always moves to the closest unvisited dot
-
-**Example:**
-```
-Original path: 570mm total travel
-Optimized path: 350mm total travel
-Savings: 38% (220mm)
-```
-
-The optimization statistics are displayed in the activity log when sending to the machine.
-
-### Precision Test Mode
-
-For calibration and precision testing:
-
-1. Switch to "Manual Drawing" tab
-2. Click "⭕ Precision Test" button
-3. System generates a 40mm radius circle with center dot
-4. Click "Send to Machine"
-5. Measure the actual embossed circle:
-   - **Radius**: Measure from center dot to circle edge
-   - **Expected**: 40mm
-   - **Percent Error**: `|measured - 40| / 40 × 100%`
-6. Verify center dot is at exact center of circle
-
-**Calibration Requirements:**
-- ✅ Home position consistent on each power-on (auto-homes on startup)
-- ✅ Precision test: circle with marked center for error calculation
 
 ## Communication Protocol
 
@@ -199,35 +124,6 @@ Each letter is represented by a pattern of dots in a 2×3 grid:
 - H = dots 1,2,5
 - (etc.)
 
-## Troubleshooting
-
-### ESP32 won't connect to WiFi
-- Check SSID and password in `braille_machine.ino`
-- Verify MAKERSPACE network is available
-- Check Serial Monitor for error messages
-
-### Web interface can't connect to ESP32
-- Verify ESP32 IP address is correct
-- Ensure both computer and ESP32 are on same network
-- Check firewall settings
-
-### Dots not pressing correctly
-- Verify servo is attached and moving
-- Check servo positions (SERVO_UP=90, SERVO_DOWN=0)
-- Adjust press delay if needed (currently 300ms)
-- Ensure silicone backing is in place
-
-### Machine not homing
-- Check limit switch connections
-- Verify limit switches are normally open
-- Test switches with multimeter
-
-### Dots overlapping or misaligned
-- Run HOME command before each job
-- Verify stepper calibration (xMmtoSteps, yMmtoSteps)
-- Check belt tension
-- Ensure work surface is level
-
 ## Physical Constraints
 
 ### Braille Text Limits
@@ -252,42 +148,46 @@ The machine presses from the **back** of the paper, so coordinates must be mirro
 
 **Formula:** `mirrored_x = 170 - original_x`
 
-This is why "Mirror" checkbox is enabled by default.
+This is why "Mirror" checkbox is enabled by default in both implementations.
 
 ## File Structure
 
 ```
 10_machine/
 ├── braille_machine.ino          # ESP32 firmware
-├── server/
+├── server/                      # Flask implementation
 │   ├── app.py                   # Flask server
 │   ├── braille_converter.py     # Text → coordinates
+│   ├── optimizer.py             # Path optimization
 │   ├── requirements.txt         # Python dependencies
 │   ├── templates/
 │   │   └── index.html          # Web interface
-│   └── static/
-│       ├── style.css           # Styling
-│       └── app.js              # Frontend logic
-└── README.md                    # This file
+│   ├── static/
+│   │   ├── style.css           # Styling
+│   │   └── app.js              # Frontend logic
+│   ├── README.md               # Flask documentation
+│   └── QUICKSTART.md           # Flask quick start
+├── rails_server/               # Rails implementation
+│   ├── app/
+│   │   ├── controllers/        # API controllers
+│   │   ├── services/           # Braille & optimization logic
+│   │   └── views/              # Web interface
+│   ├── public/
+│   │   ├── javascripts/        # Frontend logic
+│   │   └── stylesheets/        # Styling
+│   ├── Gemfile                 # Ruby dependencies
+│   ├── README.md               # Rails documentation
+│   └── QUICKSTART.md           # Rails quick start
+└── README.md                   # This file
 ```
 
-## Development Notes
+## Getting Started
 
-### Future Enhancements
-- SVG import for complex patterns
-- Toolpath optimization (traveling salesman)
-- Job queue for multiple patterns
-- Real-time position tracking
-- Undo/redo in drawing mode
-- Save/load patterns
-- Progress polling from ESP32
-
-### Known Limitations
-- No optimization (dots executed in order)
-- Progress is simulated (not real-time from ESP32)
-- 500 dot limit per job
-- No job persistence
-- Basic error handling
+1. **Upload ESP32 firmware** (see above)
+2. **Choose your implementation**:
+   - Python/Flask → See [server/QUICKSTART.md](server/QUICKSTART.md)
+   - Ruby/Rails → See [rails_server/QUICKSTART.md](rails_server/QUICKSTART.md)
+3. **Connect and create!**
 
 ## Credits
 

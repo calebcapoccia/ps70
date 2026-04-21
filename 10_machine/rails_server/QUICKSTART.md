@@ -1,8 +1,16 @@
-# Quick Start Guide - Braille Machine
+# Quick Start Guide - Ruby on Brailles 💎
 
-Get your Braille/Tactile Art Machine running in 3 steps!
+Get your Rails-powered Braille machine running in 3 steps!
+
+## Prerequisites
+
+✅ ESP32 with `braille_machine.ino` uploaded  
+✅ Ruby 3.0+ installed  
+✅ Rails 7.0+ installed
 
 ## Step 1: Upload ESP32 Firmware (5 minutes)
+
+**Skip this if you've already done it for the Flask version!**
 
 1. Open Arduino IDE
 2. Open `braille_machine.ino`
@@ -30,29 +38,31 @@ WebSocket endpoint:
 Ready for commands!
 ```
 
-## Step 2: Start Python Server (2 minutes)
+## Step 2: Start Rails Server (2 minutes)
 
 Open terminal and run:
 
 ```bash
-cd /Users/caleb/Desktop/PS70/10_machine/server
-pip install -r requirements.txt
-python app.py
+cd /Users/caleb/Desktop/PS70/10_machine/rails_server
+bundle install
+bundle exec rails server -p 3000
 ```
 
 **Expected output:**
 ```
-==================================================
-  BRAILLE MACHINE SERVER
-==================================================
-
-Starting Flask server on http://localhost:8000
-...
+=> Booting Puma
+=> Rails 8.1.3 application starting in development
+=> Run `bin/rails server --help` for more startup options
+Puma starting in single mode...
+* Puma version: 8.0.0 (ruby 4.0.2-p0) ("Generational Goodness")
+* Listening on http://127.0.0.1:3000
+* Listening on http://[::1]:3000
+Use Ctrl-C to stop
 ```
 
 ## Step 3: Use Web Interface (1 minute)
 
-1. Open browser to: **http://localhost:8000**
+1. Open browser to: **http://localhost:3000**
 2. Enter ESP32 IP address (from Step 1)
 3. Click **Connect**
 4. Click **🏠 Home** to initialize machine
@@ -93,23 +103,36 @@ Starting Flask server on http://localhost:8000
 
 ## Troubleshooting
 
-### "WiFi connection failed"
-- Check that MAKERSPACE network exists
-- Verify password is "12345678" in code
-- Try power cycling ESP32
+### "Port 3000 already in use"
+
+```bash
+# Use a different port
+bundle exec rails server -p 3001
+# Then open http://localhost:3001
+```
 
 ### "Connection failed" in web interface
+
 - Double-check IP address (no typos!)
 - Ensure computer is on MAKERSPACE network
 - Try pinging the IP: `ping 192.168.1.123`
+- Check ESP32 Serial Monitor for errors
+
+### "Gem not found" errors
+
+```bash
+bundle install
+```
 
 ### "Dots not pressing"
+
 - Run Home command first
 - Check servo is connected to D4
 - Verify servo moves when pressing (listen for sound)
 - Check silicone backing is in place
 
 ### "Machine not moving"
+
 - Check stepper connections (D1,D5 for X; D3,D2 for Y)
 - Verify power supply is connected
 - Run Home command to reset position
@@ -124,12 +147,61 @@ Starting Flask server on http://localhost:8000
 - Place silicone backing under paper
 - Use printer paper (not cardstock)
 - Flip paper to see raised dots
+- Enable path optimization (saves 30-50% time!)
 
 ❌ **DON'T:**
 - Exceed 80 characters in text mode
 - Place dots too close together (< 5mm)
 - Run without homing first
 - Use paper that's too thick
+
+---
+
+## Rails-Specific Tips
+
+### Running Both Servers
+
+You can run Flask and Rails simultaneously:
+
+```bash
+# Terminal 1: Flask
+cd server
+python app.py
+# Runs on http://localhost:8000
+
+# Terminal 2: Rails
+cd rails_server
+bundle exec rails server
+# Runs on http://localhost:3000
+```
+
+Both connect to the same ESP32!
+
+### Rails Console
+
+Test services directly:
+
+```bash
+bundle exec rails console
+```
+
+```ruby
+# Test Braille conversion
+BrailleConverter.braille_to_coords("HELLO")
+
+# Test path optimization
+dots = [[10, 10], [150, 200], [15, 15]]
+PathOptimizer.optimize_dots(dots)
+
+# Check ESP32 connection
+Esp32Connection.instance.status
+```
+
+### View Routes
+
+```bash
+bundle exec rails routes
+```
 
 ---
 
@@ -151,25 +223,31 @@ Starting Flask server on http://localhost:8000
 - Max 500 dots per job
 - Mirror enabled by default
 
+### Path Optimization
+- **⚡ Enabled (default)**: Reorders dots for shortest path
+- **Disabled**: Dots execute in order added
+- **Typical savings**: 30-50% reduction in travel time
+
 ---
 
 ## Next Steps
 
 Once basic operation works:
 
-1. **Calibrate spacing** - Adjust DOT_SPACING in `braille_converter.py` if dots too close/far
-2. **Tune servo** - Adjust SERVO_DOWN value if press too light/hard
+1. **Compare with Flask** - Run both servers and compare
+2. **Explore Rails code** - Check out the MVC structure
 3. **Test longer text** - Try full 80 character messages
 4. **Create patterns** - Experiment with drawing mode
-5. **Document results** - Take photos for your writeup!
+5. **Optimize paths** - Watch the optimization statistics
+6. **Document results** - Take photos for your writeup!
 
 ---
 
 ## Getting Help
 
-**Check Serial Monitor** for detailed logs from ESP32
-**Check Browser Console** (F12) for frontend errors
-**Check Terminal** where Python server is running for backend errors
+**Check Rails logs** in the terminal where server is running  
+**Check Browser Console** (F12) for frontend errors  
+**Check Serial Monitor** for ESP32 logs
 
 **Common error messages:**
 - `Dot out of bounds` - Position exceeds 170×250mm
@@ -183,8 +261,9 @@ Once basic operation works:
 Before your demo:
 
 - [ ] ESP32 connected to MAKERSPACE WiFi
-- [ ] Server running on laptop
-- [ ] Web interface loaded and connected
+- [ ] Rails server running on laptop
+- [ ] Web interface loaded at http://localhost:3000
+- [ ] Connected to ESP32 successfully
 - [ ] Machine homed successfully
 - [ ] Test pattern completed successfully
 - [ ] Silicone backing in place

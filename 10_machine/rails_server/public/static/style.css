@@ -1,0 +1,375 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    padding: 30px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Connection Section */
+.connection-section {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e74c3c;
+    transition: background 0.3s;
+}
+
+.status-dot.connected {
+    background: #2ecc71;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.connection-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.connection-controls input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.machine-controls {
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #3498db;
+    color: white;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: #2ecc71;
+    padding: 12px 30px;
+    font-size: 16px;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #27ae60;
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.4);
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+.tab {
+    background: transparent;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 15px 25px;
+}
+
+.tab:hover {
+    background: #f5f5f5;
+    transform: none;
+    box-shadow: none;
+}
+
+.tab.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+/* Mode Content */
+.mode-content {
+    display: none;
+}
+
+.mode-content.active {
+    display: block;
+}
+
+/* Text Mode */
+.input-section {
+    margin-bottom: 20px;
+}
+
+.input-section label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 600;
+}
+
+.input-section textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.text-info {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.controls {
+    display: flex;
+    gap: 20px;
+    margin: 15px 0;
+}
+
+.controls label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    color: #666;
+}
+
+/* Canvas Section */
+.canvas-section {
+    text-align: center;
+}
+
+.help-text {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.drawing-tools {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tool-btn {
+    padding: 10px 20px;
+    border: 2px solid #ddd;
+    background: white;
+    color: #666;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.tool-btn:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.tool-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+canvas {
+    border: 2px solid #333;
+    background: white;
+    cursor: crosshair;
+    display: block;
+    margin: 0 auto;
+}
+
+.canvas-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* Preview Section */
+.preview-section {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.preview-section h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.preview-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+/* Progress Section */
+.progress-section {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.progress-section h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 30px;
+    background: #e0e0e0;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    width: 0%;
+    transition: width 0.3s;
+}
+
+#progressText {
+    text-align: center;
+    color: #666;
+    font-weight: 600;
+}
+
+/* Log Section */
+.log-section {
+    margin-top: 20px;
+}
+
+.log-section h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.log-container {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 15px;
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.log-entry {
+    margin-bottom: 5px;
+}
+
+.log-entry.error {
+    color: #f48771;
+}
+
+.log-entry.success {
+    color: #89d185;
+}
+
+.log-entry.info {
+    color: #6cb6ff;
+}
+
+.log-entry.warning {
+    color: #f9c859;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .connection-controls {
+        flex-direction: column;
+    }
+    
+    .machine-controls {
+        flex-wrap: wrap;
+    }
+    
+    canvas {
+        max-width: 100%;
+        height: auto;
+    }
+}
