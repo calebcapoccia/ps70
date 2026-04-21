@@ -469,23 +469,35 @@ function showProgress(total) {
     const progressSection = document.getElementById('progressSection');
     progressSection.style.display = 'block';
     
-    // Simulate progress (in real implementation, would poll ESP32 for status)
-    let current = 0;
-    const interval = setInterval(() => {
-        current++;
-        const percent = (current / total) * 100;
-        document.getElementById('progressFill').style.width = `${percent}%`;
-        document.getElementById('progressText').textContent = `${current} / ${total} dots complete`;
-        
-        if (current >= total) {
-            clearInterval(interval);
-            log('✓ Job complete!', 'success');
-            document.getElementById('sendBtn').disabled = false;
-            setTimeout(() => {
-                progressSection.style.display = 'none';
-            }, 3000);
+    // Poll ESP32 for real progress updates
+    const interval = setInterval(async () => {
+        try {
+            const response = await fetch('/api/progress');
+            const data = await response.json();
+            
+            if (data.success) {
+                if (data.status === 'running' && data.current !== undefined) {
+                    // Update progress bar with real data
+                    const percent = (data.current / data.total) * 100;
+                    document.getElementById('progressFill').style.width = `${percent}%`;
+                    document.getElementById('progressText').textContent = `${data.current} / ${data.total} dots complete`;
+                    log(`Progress: ${data.current}/${data.total}`, 'info');
+                } else if (data.status === 'complete') {
+                    // Job finished
+                    clearInterval(interval);
+                    document.getElementById('progressFill').style.width = '100%';
+                    document.getElementById('progressText').textContent = `${total} / ${total} dots complete`;
+                    log('✓ Job complete!', 'success');
+                    document.getElementById('sendBtn').disabled = false;
+                    setTimeout(() => {
+                        progressSection.style.display = 'none';
+                    }, 3000);
+                }
+            }
+        } catch (error) {
+            console.error('Progress poll error:', error);
         }
-    }, 500);
+    }, 500);  // Poll every 500ms
 }
 
 // Machine Commands

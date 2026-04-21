@@ -198,6 +198,49 @@ def api_clear():
     result = send_to_esp32("CLEAR")
     return jsonify(result)
 
+@app.route('/api/progress', methods=['GET'])
+def api_progress():
+    """Poll for progress updates from ESP32"""
+    global esp32_ws
+    
+    if not esp32_connected or esp32_ws is None:
+        return jsonify({"success": False, "error": "Not connected"})
+    
+    try:
+        # Check if there's a message waiting
+        esp32_ws.settimeout(0.1)
+        try:
+            response = esp32_ws.recv()
+            print(f"← Progress check: {response}")
+            
+            # Parse PROGRESS,current,total or COMPLETE
+            if response.startswith("PROGRESS,"):
+                parts = response.split(',')
+                if len(parts) == 3:
+                    return jsonify({
+                        "success": True,
+                        "status": "running",
+                        "current": int(parts[1]),
+                        "total": int(parts[2])
+                    })
+            elif response == "COMPLETE":
+                return jsonify({
+                    "success": True,
+                    "status": "complete"
+                })
+            elif response == "BUSY":
+                return jsonify({
+                    "success": True,
+                    "status": "busy"
+                })
+            
+            return jsonify({"success": True, "status": "unknown", "message": response})
+        except:
+            # No message waiting
+            return jsonify({"success": True, "status": "no_update"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 if __name__ == '__main__':
     print("\n" + "="*50)
     print("  BRAILLE MACHINE SERVER")
