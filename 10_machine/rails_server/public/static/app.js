@@ -340,23 +340,20 @@ function generatePrecisionTest() {
     
     log('Generating precision test pattern...', 'info');
     
-    // Generate circle dots (every 5mm around circumference)
-    const circumference = 2 * Math.PI * radius;
-    const numDots = Math.floor(circumference / GRID_SPACING); // Approximately one dot every 5mm
+    // Generate circle by checking grid points
+    const tolerance = 2.0; // 2mm tolerance
     
-    for (let i = 0; i < numDots; i++) {
-        const angle = (i / numDots) * 2 * Math.PI;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY + radius * Math.sin(angle);
-        
-        // Snap to grid
-        const snapped = snapToGrid(x, y);
-        
-        // Check if already exists (avoid duplicates)
-        const exists = drawingDots.some(dot => dot.x === snapped.x && dot.y === snapped.y);
-        if (!exists && snapped.x >= 0 && snapped.x <= WORK_WIDTH - DOT_SIZE && 
-            snapped.y >= 0 && snapped.y <= WORK_HEIGHT - DOT_SIZE) {
-            drawingDots.push(snapped);
+    for (let x = 0; x <= WORK_WIDTH; x += GRID_SPACING) {
+        for (let y = 0; y <= WORK_HEIGHT; y += GRID_SPACING) {
+            const distance = Math.sqrt((x - centerX)**2 + (y - centerY)**2);
+            
+            // If this grid point is close to the radius, add it
+            if (Math.abs(distance - radius) <= tolerance) {
+                if (x >= 0 && x <= WORK_WIDTH - DOT_SIZE && 
+                    y >= 0 && y <= WORK_HEIGHT - DOT_SIZE) {
+                    drawingDots.push({x, y});
+                }
+            }
         }
     }
     
