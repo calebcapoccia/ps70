@@ -333,10 +333,10 @@ function generatePrecisionTest() {
     // Clear existing dots
     drawingDots = [];
     
-    // Circle parameters - centered in work area with reasonable size
+    // Circle parameters - centered in work area, maximum size
     const centerX = WORK_WIDTH / 2;  // 85mm
     const centerY = WORK_HEIGHT / 2; // 125mm
-    const radius = 40; // 40mm radius circle
+    const radius = 80; // 80mm radius circle (160mm diameter for easy measurement)
     
     log('Generating precision test pattern...', 'info');
     
