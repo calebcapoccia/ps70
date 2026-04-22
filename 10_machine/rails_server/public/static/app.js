@@ -529,23 +529,6 @@ function showProgress(total) {
             }
         }
     });
-    
-    // Timeout fallback - if no updates after 60 seconds, assume complete
-    setTimeout(() => {
-        if (progressSection.style.display === 'block') {
-            document.getElementById('progressFill').style.width = '100%';
-            document.getElementById('progressText').textContent = `${total} / ${total} dots complete`;
-            log('✓ Job complete (timeout)', 'success');
-            document.getElementById('sendBtn').disabled = false;
-            setTimeout(() => {
-                progressSection.style.display = 'none';
-                if (progressSubscription) {
-                    progressSubscription.unsubscribe();
-                    progressSubscription = null;
-                }
-            }, 3000);
-        }
-    }, 60000);
 }
 
 // Machine Commands
