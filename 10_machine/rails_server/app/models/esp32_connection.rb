@@ -1,5 +1,5 @@
-require 'socket'
-require 'websocket'
+require 'faye/websocket'
+require 'eventmachine'
 require 'singleton'
 
 class Esp32Connection
@@ -8,103 +8,139 @@ class Esp32Connection
   attr_reader :connected, :ip
 
   def initialize
-    @socket = nil
-    @handshake = nil
+    @ws = nil
     @connected = false
     @ip = nil
+    @message_queue = Queue.new
+    @em_thread = nil
   end
 
   def connect(ip)
-    begin
-      ws_url = "ws://#{ip}/ws"
-      Rails.logger.info "Connecting to ESP32 at #{ws_url}..."
+    disconnect if @connected
 
-      # Parse URL
-      uri = URI.parse(ws_url)
-      
-      # Create TCP socket
-      @socket = TCPSocket.new(uri.host, uri.port || 80)
-      @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
-      
-      # Perform WebSocket handshake
-      @handshake = WebSocket::Handshake::Client.new(url: ws_url)
-      @socket.write(@handshake.to_s)
-      
-      # Read handshake response
-      response = ""
-      while line = @socket.gets
-        response += line
-        break if line == "\r\n"
-      end
-      
-      @handshake << response
-      
-      unless @handshake.finished?
-        raise "WebSocket handshake failed"
-      end
-      
-      @connected = true
-      @ip = ip
-      
-      Rails.logger.info "✓ Connected to ESP32 at #{ip}"
-      
-      # Try to receive initial message
-      begin
-        Timeout.timeout(1) do
-          frame = receive_frame
-          Rails.logger.info "← Received from ESP32: #{frame}" if frame
+    @ip = ip
+    ws_url = "ws://#{ip}/ws"
+    Rails.logger.info "Connecting to ESP32 at #{ws_url}..."
+
+    begin
+      # Start EventMachine in a separate thread
+      @em_thread = Thread.new do
+        EM.run do
+          @ws = Faye::WebSocket::Client.new(ws_url)
+
+          @ws.on :open do |event|
+            Rails.logger.info "✓ Connected to ESP32 at #{ip}"
+            @connected = true
+          end
+
+          @ws.on :message do |event|
+            message = event.data
+            Rails.logger.info "← Received: #{message}"
+            @message_queue << message
+          end
+
+          @ws.on :close do |event|
+            Rails.logger.warn "WebSocket closed: #{event.code} #{event.reason}"
+            @connected = false
+            @ws = nil
+          end
+
+          @ws.on :error do |event|
+            Rails.logger.error "WebSocket error: #{event.message}"
+            @connected = false
+          end
         end
-      rescue Timeout::Error
-        # No initial message, that's okay
       end
-      
-      return true
+
+      # Wait for connection
+      sleep 0.5
+      @connected
     rescue => e
-      Rails.logger.error "✗ Failed to connect to ESP32: #{e.message}"
-      @connected = false
-      if @socket
-        begin
-          @socket.close
-        rescue
-        end
-      end
-      @socket = nil
-      @handshake = nil
-      return false
+      Rails.logger.error "Failed to connect: #{e.message}"
+      false
     end
   end
 
   def disconnect
-    if @socket
-      begin
-        @socket.close
-      rescue => e
-        Rails.logger.error "Error closing WebSocket: #{e.message}"
-      end
+    if @ws
+      @ws.close
+      @ws = nil
     end
-
-    @socket = nil
-    @handshake = nil
+    
+    if @em_thread
+      EM.stop if EM.reactor_running?
+      @em_thread.kill
+      @em_thread = nil
+    end
+    
     @connected = false
-    @ip = nil
+    @message_queue.clear
+    Rails.logger.info "Disconnected from ESP32"
   end
 
   def send_command(command)
-    unless @connected && @socket
-      return { success: false, error: "Not connected to ESP32" }
+    unless @connected && @ws
+      return { success: false, error: "Not connected" }
     end
 
     begin
-      frame = WebSocket::Frame::Outgoing::Client.new(version: @handshake.version, data: command, type: :text)
-      @socket.write(frame.to_s)
-      Rails.logger.info "→ Sent to ESP32: #{command}"
-      
+      @ws.send(command)
+      Rails.logger.info "→ Sent: #{command}"
       sleep(0.05)
-      
-      { success: true, response: nil }
+      { success: true }
     rescue => e
-      Rails.logger.error "✗ Error sending to ESP32: #{e.message}"
-      @connected = false
+      Rails.logger.error "Error sending command: #{e.message}"
+      { success: false, error: e.message }
+    end
+  end
+
+  def check_progress
+    unless @connected
+      return { success: false, error: "Not connected" }
+    end
+
+    begin
+      # Check if there are any messages in the queue
+      messages = []
+      while !@message_queue.empty?
+        messages << @message_queue.pop(true) rescue nil
+      end
+
+      latest_progress = nil
+
+      messages.compact.each do |message|
+        Rails.logger.debug "📬 Processing message: #{message.inspect}"
+
+        if message.start_with?("PROGRESS,")
+          parts = message.split(',')
+          if parts.length == 3
+            latest_progress = {
+              success: true,
+              status: "running",
+              current: parts[1].to_i,
+              total: parts[2].to_i
+            }
+            Rails.logger.info "✅ Progress: #{latest_progress[:current]}/#{latest_progress[:total]}"
+          end
+        elsif message == "COMPLETE"
+          Rails.logger.info "🎉 Complete!"
+          return {
+            success: true,
+            status: "complete"
+          }
+        elsif message == "READY"
+          Rails.logger.debug "ℹ️  Ready message"
+        elsif message == "BUSY"
+          latest_progress = {
+            success: true,
+            status: "busy"
+          }
+        end
+      end
+
+      latest_progress || { success: true, status: "no_update" }
+    rescue => e
+      Rails.logger.error "Error checking progress: #{e.message}"
       { success: false, error: e.message }
     end
   end
@@ -118,22 +154,5 @@ class Esp32Connection
       connected: @connected,
       ip: @ip
     }
-  end
-
-  private
-
-  def receive_frame
-    return nil unless @socket
-
-    frame = WebSocket::Frame::Incoming::Client.new(version: @handshake.version)
-    
-    while !frame.next
-      data = @socket.readpartial(1024)
-      frame << data
-    end
-    
-    frame.data
-  rescue
-    nil
   end
 end

@@ -72,6 +72,9 @@ module Api
 
       result = @esp32.send_command("RUN")
 
+      # Start background job to monitor progress and broadcast via WebSocket
+      MonitorEsp32Job.perform_later
+
       response = {
         success: true,
         dots_sent: dots.length

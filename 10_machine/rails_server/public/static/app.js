@@ -12,6 +12,12 @@ let currentMode = 'text';
 let connected = false;
 let currentDots = [];
 let drawingDots = [];
+let currentTool = 'draw';
+let progressSubscription = null;
+let currentProgressTotal = 0;
+
+// Setup Action Cable WebSocket connection
+const cable = ActionCable.createConsumer('ws://localhost:3000/cable');
 let drawMode = 'pen'; // 'pen' or 'eraser'
 let isDrawing = false;
 
@@ -333,10 +339,10 @@ function generatePrecisionTest() {
     // Clear existing dots
     drawingDots = [];
     
-    // Circle parameters - centered in work area with reasonable size
+    // Circle parameters - centered in work area, maximum size
     const centerX = WORK_WIDTH / 2;  // 85mm
     const centerY = WORK_HEIGHT / 2; // 125mm
-    const radius = 40; // 40mm radius circle
+    const radius = 80; // 80mm radius circle (160mm diameter for easy measurement)
     
     log('Generating precision test pattern...', 'info');
     
@@ -477,36 +483,69 @@ async function sendToMachine() {
 function showProgress(total) {
     const progressSection = document.getElementById('progressSection');
     progressSection.style.display = 'block';
+    currentProgressTotal = total;
     
-    // Poll ESP32 for real progress updates
-    const interval = setInterval(async () => {
-        try {
-            const response = await fetch('/api/progress');
-            const data = await response.json();
+    log('📡 Subscribing to progress updates via WebSocket...', 'info');
+    
+    // Unsubscribe from previous subscription if exists
+    if (progressSubscription) {
+        progressSubscription.unsubscribe();
+    }
+    
+    // Subscribe to machine progress channel
+    progressSubscription = cable.subscriptions.create("MachineChannel", {
+        connected() {
+            log('✓ Connected to progress WebSocket', 'success');
+        },
+        
+        disconnected() {
+            log('⚠️  Disconnected from progress WebSocket', 'warning');
+        },
+        
+        received(data) {
+            console.log('📬 Received progress update:', data);
             
-            if (data.success) {
-                if (data.status === 'running' && data.current !== undefined) {
-                    // Update progress bar with real data
-                    const percent = (data.current / data.total) * 100;
-                    document.getElementById('progressFill').style.width = `${percent}%`;
-                    document.getElementById('progressText').textContent = `${data.current} / ${data.total} dots complete`;
-                    log(`Progress: ${data.current}/${data.total}`, 'info');
-                } else if (data.status === 'complete') {
-                    // Job finished
-                    clearInterval(interval);
-                    document.getElementById('progressFill').style.width = '100%';
-                    document.getElementById('progressText').textContent = `${total} / ${total} dots complete`;
-                    log('✓ Job complete!', 'success');
-                    document.getElementById('sendBtn').disabled = false;
-                    setTimeout(() => {
-                        progressSection.style.display = 'none';
-                    }, 3000);
-                }
+            if (data.status === 'running' && data.current !== undefined) {
+                // Update progress bar with real data
+                const percent = (data.current / data.total) * 100;
+                document.getElementById('progressFill').style.width = `${percent}%`;
+                document.getElementById('progressText').textContent = `${data.current} / ${data.total} dots complete`;
+                log(`Progress: ${data.current}/${data.total}`, 'info');
+            } else if (data.status === 'complete') {
+                // Job finished
+                document.getElementById('progressFill').style.width = '100%';
+                document.getElementById('progressText').textContent = `${currentProgressTotal} / ${currentProgressTotal} dots complete`;
+                log('✓ Job complete!', 'success');
+                document.getElementById('sendBtn').disabled = false;
+                
+                // Unsubscribe and hide after delay
+                setTimeout(() => {
+                    progressSection.style.display = 'none';
+                    if (progressSubscription) {
+                        progressSubscription.unsubscribe();
+                        progressSubscription = null;
+                    }
+                }, 3000);
             }
-        } catch (error) {
-            console.error('Progress poll error:', error);
         }
-    }, 500);  // Poll every 500ms
+    });
+    
+    // Timeout fallback - if no updates after 60 seconds, assume complete
+    setTimeout(() => {
+        if (progressSection.style.display === 'block') {
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressText').textContent = `${total} / ${total} dots complete`;
+            log('✓ Job complete (timeout)', 'success');
+            document.getElementById('sendBtn').disabled = false;
+            setTimeout(() => {
+                progressSection.style.display = 'none';
+                if (progressSubscription) {
+                    progressSubscription.unsubscribe();
+                    progressSubscription = null;
+                }
+            }, 3000);
+        }
+    }, 60000);
 }
 
 // Machine Commands
