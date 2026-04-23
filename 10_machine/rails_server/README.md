@@ -11,9 +11,16 @@ This is a complete Rails alternative to the Flask server, providing the same fun
 ✅ **Text to Braille Conversion** - Type text, get Braille coordinates  
 ✅ **Manual Drawing Mode** - Click and drag to create custom patterns  
 ✅ **Path Optimization** - Nearest neighbor algorithm reduces travel time by 30-50%  
-✅ **ESP32 WebSocket Communication** - Real-time control of the machine  
+✅ **Real-time Progress Updates** - WebSocket-based progress (no polling!)  
+✅ **ESP32 WebSocket Communication** - Bidirectional real-time control  
 ✅ **Precision Test Mode** - Generate calibration patterns  
 ✅ **Beautiful Web UI** - Same interface as Flask version
+
+### Key Improvements over Flask
+- 🚀 **Action Cable WebSockets** - Push-based progress updates instead of HTTP polling
+- 🔧 **faye-websocket** - Reliable WebSocket client with automatic frame parsing
+- ⚡ **Background Jobs** - Non-blocking progress monitoring
+- 📡 **Multi-client Support** - Multiple browsers can watch progress simultaneously
 
 ## Requirements
 
@@ -91,40 +98,59 @@ All endpoints return JSON responses:
 
 ```
 Browser
-   ↓
+   ↕ HTTP (API calls)
+   ↕ WebSocket (Action Cable - real-time progress)
 Rails Server (Port 3000)
    ├── Controllers (API endpoints)
+   ├── Channels (Action Cable - MachineChannel)
+   ├── Jobs (MonitorEsp32Job - background progress monitoring)
    ├── Services (Braille conversion, path optimization)
    └── Models (ESP32 WebSocket connection)
-   ↓
-ESP32 (WebSocket)
+   ↓ WebSocket
+ESP32 (ws://192.168.x.x/ws)
    ↓
 Stepper Motors + Servo
 ```
+
+### Real-time Progress Updates
+- Frontend subscribes to `MachineChannel` via Action Cable WebSocket
+- When dots are sent, `MonitorEsp32Job` starts in background
+- Job polls ESP32 every 500ms for progress messages
+- Progress broadcasts to all connected clients in real-time
+- No HTTP polling needed!
 
 ## Code Structure
 
 ```
 rails_server/
 ├── app/
+│   ├── channels/
+│   │   ├── application_cable/
+│   │   │   ├── channel.rb              # Base channel class
+│   │   │   └── connection.rb           # Base connection class
+│   │   └── machine_channel.rb          # Real-time progress updates
 │   ├── controllers/
-│   │   ├── home_controller.rb           # Serves main page
+│   │   ├── home_controller.rb          # Serves main page
 │   │   └── api/
-│   │       ├── braille_controller.rb    # Text conversion
-│   │       └── machine_controller.rb    # ESP32 communication
+│   │       ├── braille_controller.rb   # Text conversion
+│   │       └── machine_controller.rb   # ESP32 communication
+│   ├── jobs/
+│   │   └── monitor_esp32_job.rb        # Background progress monitoring
 │   ├── models/
-│   │   └── esp32_connection.rb          # WebSocket singleton
+│   │   └── esp32_connection.rb         # ESP32 WebSocket client (faye-websocket)
 │   └── services/
-│       ├── braille_converter.rb         # Text → coordinates
-│       └── path_optimizer.rb            # Nearest neighbor algorithm
+│       ├── braille_converter.rb        # Text → coordinates
+│       └── path_optimizer.rb           # Nearest neighbor algorithm
 ├── config/
-│   └── routes.rb                        # API routes
+│   ├── cable.yml                       # Action Cable configuration
+│   └── routes.rb                       # API routes
 ├── public/
-│   ├── index.html                       # Web interface
+│   ├── index.html                      # Web interface (includes Action Cable JS)
 │   └── static/
-│       ├── app.js                       # Frontend logic
-│       └── style.css                    # Styling
-└── Gemfile                              # Dependencies
+│       ├── app.js                      # Frontend logic (WebSocket subscriptions)
+│       └── style.css                   # Styling
+├── ARCHITECTURE.md                     # Detailed system design
+└── Gemfile                             # Dependencies (faye-websocket, eventmachine)
 ```
 
 ## Usage
@@ -243,17 +269,35 @@ bundle exec rails tmp:clear
 bundle exec rails server
 ```
 
+### Progress bar not updating
+
+1. **Hard refresh browser** - Press `Cmd+Shift+R` (Mac) or `Ctrl+Shift+R` (Windows) to clear JavaScript cache
+2. **Check browser console** - Look for WebSocket connection errors
+3. **Verify Action Cable** - Should see "Connected to progress WebSocket" in activity log
+4. **Check Rails logs** - Look for `[MonitorEsp32Job]` messages showing progress polling
+
+### WebSocket connection issues
+
+```bash
+# Check if EventMachine is installed
+bundle list | grep eventmachine
+
+# Reinstall gems if needed
+bundle install
+```
+
 ## Why Rails?
 
 1. **Learning** - Provides comparison between Rails and Flask architectures
 2. **Structure** - Rails conventions make code organization clear
-3. **Ecosystem** - Rich gem ecosystem for future features
-4. **Flexibility** - Offers alternative implementation for different preferences
+3. **Real-time Features** - Action Cable provides native WebSocket support
+4. **Background Jobs** - Active Job for non-blocking operations
+5. **Ecosystem** - Rich gem ecosystem for future features
 
 ## Future Enhancements
 
-- Real-time progress updates via Action Cable
-- Job queue with Active Job
+- ✅ ~~Real-time progress updates via Action Cable~~ **DONE!**
+- ✅ ~~Job queue with Active Job~~ **DONE!**
 - Pattern library with Active Storage
 - User authentication
 - SVG import
