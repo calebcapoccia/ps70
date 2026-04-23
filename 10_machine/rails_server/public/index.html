@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruby on Brailles 💎⠃⠗⠇</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💎 Ruby on Brailles ⠃⠗⠇</h1>
+            <p class="subtitle">170×250mm work area • 3mm dots • 5mm spacing • Powered by Rails</p>
+        </header>
+
+        <!-- Connection Section -->
+        <div class="connection-section">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Disconnected</span>
+            </div>
+            
+            <div class="connection-controls">
+                <input type="text" id="espIp" placeholder="ESP32 IP (e.g., 192.168.1.123)" />
+                <button onclick="connect()" id="connectBtn">Connect</button>
+                <button onclick="disconnect()" id="disconnectBtn" disabled>Disconnect</button>
+            </div>
+            
+            <div class="machine-controls">
+                <button onclick="sendHome()" id="homeBtn" disabled>🏠 Home</button>
+                <button onclick="sendStop()" id="stopBtn" disabled>⏹️ Stop</button>
+                <button onclick="sendClear()" id="clearBtn" disabled>🗑️ Clear Queue</button>
+            </div>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('text')">📝 Text to Braille</button>
+            <button class="tab" onclick="switchTab('draw')">🎨 Manual Drawing</button>
+        </div>
+
+        <!-- Text Mode -->
+        <div id="textMode" class="mode-content active">
+            <div class="input-section">
+                <label for="textInput">Enter Text (max 80 characters)</label>
+                <textarea id="textInput" rows="4" placeholder="Type your message here..."></textarea>
+                <div class="text-info">
+                    <span id="charCount">0 / 80 characters</span>
+                    <span id="lineCount">0 lines</span>
+                </div>
+                <div class="controls">
+                    <label>
+                        <input type="checkbox" id="autoWrap" checked />
+                        Auto word-wrap at 10 chars/line
+                    </label>
+                    <label>
+                        <input type="checkbox" id="mirrorText" checked />
+                        Mirror (for flip-over embossing)
+                    </label>
+                </div>
+                <button onclick="convertText()" class="btn-primary">Convert to Braille</button>
+            </div>
+        </div>
+
+        <!-- Drawing Mode -->
+        <div id="drawMode" class="mode-content">
+            <div class="canvas-section">
+                <p class="help-text">Click and drag to draw • Dots snap to 5mm grid</p>
+                <div class="drawing-tools">
+                    <button onclick="setDrawMode('pen')" id="penBtn" class="tool-btn active">✏️ Pen</button>
+                    <button onclick="setDrawMode('eraser')" id="eraserBtn" class="tool-btn">🧹 Eraser</button>
+                </div>
+                <canvas id="drawCanvas" width="340" height="500"></canvas>
+                <div class="canvas-controls">
+                    <button onclick="clearCanvas()">Clear Canvas</button>
+                    <button onclick="generatePrecisionTest()" style="background: #9b59b6;">⭕ Precision Test</button>
+                    <span id="dotCount">0 dots</span>
+                    <label>
+                        <input type="checkbox" id="mirrorDraw" checked />
+                        Mirror (for flip-over)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <h3>Preview</h3>
+            <canvas id="previewCanvas" width="340" height="500"></canvas>
+            <div class="preview-info">
+                <span id="previewDotCount">0 dots</span>
+                <label style="margin-left: 15px;">
+                    <input type="checkbox" id="optimizePath" checked />
+                    ⚡ Optimize path
+                </label>
+                <button onclick="sendToMachine()" class="btn-primary" id="sendBtn">Send to Machine</button>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-section" id="progressSection" style="display: none;">
+            <h3>Execution Progress</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="progressText">0 / 0 dots complete</p>
+        </div>
+
+        <!-- Log Section -->
+        <div class="log-section">
+            <h3>Activity Log</h3>
+            <div class="log-container" id="logContainer"></div>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@rails/actioncable@7.0.0/app/assets/javascripts/actioncable.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
