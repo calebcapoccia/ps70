@@ -52,8 +52,18 @@ class Esp32Connection
         end
       end
 
-      # Wait for connection
-      sleep 0.5
+      # Wait up to 5 seconds for connection to establish
+      deadline = Time.now + 5
+      while !@connected && Time.now < deadline
+        sleep 0.1
+      end
+      
+      if @connected
+        Rails.logger.info "✓ Connection established"
+      else
+        Rails.logger.error "✗ Connection timed out after 5s"
+      end
+      
       @connected
     rescue => e
       Rails.logger.error "Failed to connect: #{e.message}"
@@ -78,7 +88,16 @@ class Esp32Connection
     Rails.logger.info "Disconnected from ESP32"
   end
 
-  def send_command(command)
+  def send_command(command, retry_on_disconnect: true)
+    # If not connected but we have a previous IP, try to reconnect
+    if (!@connected || !@ws) && @ip && retry_on_disconnect
+      Rails.logger.warn "🔄 Not connected, attempting auto-reconnect to #{@ip}..."
+      reconnect_result = reconnect
+      unless reconnect_result
+        return { success: false, error: "Not connected (auto-reconnect failed)" }
+      end
+    end
+
     unless @connected && @ws
       return { success: false, error: "Not connected" }
     end
@@ -90,8 +109,22 @@ class Esp32Connection
       { success: true }
     rescue => e
       Rails.logger.error "Error sending command: #{e.message}"
+      # Try one reconnect + retry
+      if retry_on_disconnect && @ip
+        Rails.logger.warn "🔄 Send failed, attempting reconnect + retry..."
+        if reconnect
+          return send_command(command, retry_on_disconnect: false)
+        end
+      end
       { success: false, error: e.message }
     end
+  end
+
+  def reconnect
+    return false unless @ip
+    saved_ip = @ip
+    disconnect
+    connect(saved_ip)
   end
 
   def check_progress
