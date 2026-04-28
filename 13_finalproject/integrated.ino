@@ -16,14 +16,16 @@
 #define CHARACTERISTIC_UUID "82b3bdc2-ccf2-4063-b820-9a66322f8234"
 
 // Define pins
-const int dataPin = 15;
-const int csPin = 2;
-const int clkPin = 4;
-const int btnPin = 23;
+const int dataPin = 5;
+const int csPin = 18;
+const int clkPin = 23;
+const int btnPin = 19;
 
-const int redPin = 5;
-const int bluePin = 18;
-const int greenPin = 19;
+const int redPin = 12;
+const int greenPin = 13;
+const int bluePin = 15;
+
+const int batteryPin = 36; // ADC1_CH0 (VP) - analog input only
 
 String currentMessage = "Booting!";
 uint16_t numScrolls = 1;
@@ -32,6 +34,52 @@ uint16_t currentPause = 0;
 uint16_t currentSpeed = 25;
 bool scrolling = false;
 bool incomingMessage = false;
+
+void setRgb(bool r, bool g, bool b) {
+  digitalWrite(redPin, r ? HIGH : LOW);
+  digitalWrite(greenPin, g ? HIGH : LOW);
+  digitalWrite(bluePin, b ? HIGH : LOW);
+}
+
+// Set LED color based on battery percent: >=80 green, 20-80 yellow, <20 red
+void setBatteryColor(float pct) {
+  if (pct >= 80.0f)      setRgb(false, true,  false); // Green
+  else if (pct >= 20.0f) setRgb(true,  true,  false); // Yellow (R+G)
+  else                   setRgb(true,  false, false); // Red
+}
+
+// Battery monitoring state
+const unsigned long batteryInterval = 2000; // ms between reads
+unsigned long batteryLastRead = 0;
+
+// LiPo voltage range (single cell): ~3.0V empty to ~4.2V full.
+// User's "3.3V" LiPo: assuming direct connection within ESP32 ADC range (0-3.3V).
+const float batteryMinV = 3.0f;
+const float batteryMaxV = 4.2f;
+const float batteryDividerRatio = 2.0f; // 1:1 divider -> ADC sees Vbat/2
+
+void readBattery() {
+  unsigned long now = millis();
+  if (now - batteryLastRead < batteryInterval) return;
+  batteryLastRead = now;
+
+  // analogReadMilliVolts uses ESP32's factory ADC calibration
+  uint32_t mv = analogReadMilliVolts(batteryPin);
+  float voltage = (mv / 1000.0f) * batteryDividerRatio;
+
+  // Approximate charge percentage (clamped 0-100)
+  float pct = (voltage - batteryMinV) / (batteryMaxV - batteryMinV) * 100.0f;
+  if (pct < 0) pct = 0;
+  if (pct > 100) pct = 100;
+
+  Serial.print("Battery: V=");
+  Serial.print(voltage, 2);
+  Serial.print(" charge=");
+  Serial.print(pct, 0);
+  Serial.println("%");
+
+  setBatteryColor(pct);
+}
 
 // Bluetooth variables
 uint16_t connectionId = 0;
@@ -184,6 +232,14 @@ void setup() {
   Serial.begin(9600);
   ledDisplay.begin(); // Start LED
 
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+  setRgb(true, false, false); // start on red
+
+  analogReadResolution(12);
+  pinMode(batteryPin, INPUT);
+
   universalBtn.begin();
 
   // Begin BLE connection
@@ -210,6 +266,9 @@ void setup() {
 }
 
 void loop() {
+  // Periodically read battery and update LED color
+  readBattery();
+
   // Check if reset button held
   if (universalBtn.isReset()) {
     if (deviceConnected) {
