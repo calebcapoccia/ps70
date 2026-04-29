@@ -5,6 +5,7 @@
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include <BLE2902.h>
 
 #include <ArduinoJson.h>
 
@@ -12,8 +13,9 @@
 #define MAX_DEVICES 8
 
 // Come back and change later?
-#define SERVICE_UUID        "6da6814e-13a5-4144-96a0-6db8d3b343c9"
-#define CHARACTERISTIC_UUID "82b3bdc2-ccf2-4063-b820-9a66322f8234"
+#define SERVICE_UUID                "6da6814e-13a5-4144-96a0-6db8d3b343c9"
+#define CHARACTERISTIC_UUID         "82b3bdc2-ccf2-4063-b820-9a66322f8234"
+#define BATTERY_CHARACTERISTIC_UUID "b2c3d4e5-1234-5678-9abc-def012345678"
 
 // Define pins
 const int dataPin = 5;
@@ -51,6 +53,9 @@ void setBatteryColor(float pct) {
 // Battery monitoring state
 const unsigned long batteryInterval = 2000; // ms between reads
 unsigned long batteryLastRead = 0;
+BLECharacteristic *pBatteryCharacteristic = nullptr;
+int lastReportedPct = -1;
+bool deviceConnected = false; // forward use
 
 // LiPo voltage range (single cell): ~3.0V empty to ~4.2V full.
 // User's "3.3V" LiPo: assuming direct connection within ESP32 ADC range (0-3.3V).
@@ -79,11 +84,22 @@ void readBattery() {
   Serial.println("%");
 
   setBatteryColor(pct);
+
+  // Publish over BLE
+  if (pBatteryCharacteristic != nullptr) {
+    char buf[48];
+    int intPct = (int)(pct + 0.5f);
+    snprintf(buf, sizeof(buf), "{\"v\":%.2f,\"p\":%d}", voltage, intPct);
+    pBatteryCharacteristic->setValue((uint8_t*)buf, strlen(buf));
+    if (deviceConnected && intPct != lastReportedPct) {
+      pBatteryCharacteristic->notify();
+      lastReportedPct = intPct;
+    }
+  }
 }
 
 // Bluetooth variables
 uint16_t connectionId = 0;
-bool deviceConnected = false;
 bool oldDeviceConnected = false;
 BLEServer *pServer;
 
@@ -257,6 +273,15 @@ void setup() {
 
   pCharacteristic->setCallbacks(new DisplayCallbacks());
   pCharacteristic->setValue("");
+
+  // Battery characteristic (read + notify)
+  pBatteryCharacteristic = pService->createCharacteristic(
+                             BATTERY_CHARACTERISTIC_UUID,
+                             BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY
+                           );
+  pBatteryCharacteristic->addDescriptor(new BLE2902());
+  pBatteryCharacteristic->setValue("{\"v\":0.00,\"p\":0}");
+
   pService->start();
 
   BLEAdvertising *pAdvertising = pServer->getAdvertising();
