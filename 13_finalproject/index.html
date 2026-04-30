@@ -24,8 +24,203 @@
 <div class="textcontainer typewriter-texture">
 <p class="margin"></p>
 
-<h3>Final Project: [INSERT FINAL PROJECT HERE]</h3>
+<h3>Final Project: Kachow Car Display</h3>
 
+<p>My final project is a car-mounted scrolling LED display controlled over Bluetooth from a mobile app with speech-to-text input. A driver (or passenger) can dictate a message into the app, have it transcribed via on-device STT, and send it via BLE to the ESP32 in the display, which scrolls the message across a MAX7219 LED matrix affixed to the rear dashboard.</p>
+
+<img src="./integrated_headline.png" alt="Kachow car display headline" style="max-width: 600px; display:block; margin:0 auto;">
+
+<h4>1. MVP</h4>
+
+<p>During MVP week, I focused on getting the core input/output pipeline working end-to-end: speech-to-text input in a browser, transmitting the transcribed message to the ESP32 over WiFi via an HTTP server, and scrolling the received text across the MAX7219 display. I also built a first-pass housing with 3D-printed clamps to hold the LED matrix to a rigid backing, and wrote the Arduino logic for non-blocking scrolling with configurable speed, pause, and repeat count.</p>
+
+<p>This got the idea functional, but relying on a laptop-hosted web server on the same WiFi network as both the phone and the display, plus finicky browser STT, made the UX brittle. For the full MVP writeup, see the <a href="../07_outputs/index.html">Week 7 page</a>.</p>
+
+<div style="width:100%; max-width:800px; margin: 20px auto;">
+  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+    <iframe
+      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+      src="https://www.youtube.com/embed/VisRwon42es"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
+
+<h4>2. Networking</h4>
+
+<p>For the networking milestone, I replaced the WiFi + web-server setup with Bluetooth Low Energy (BLE) and a native React Native iOS app, which eliminates the need for any laptop or shared WiFi. The ESP32 advertises a <code>CarDisplay</code> BLE service; the app scans, connects, and writes JSON payloads (text, speed, repeat, pause) to a characteristic, which the Arduino parses with <code>ArduinoJson</code>. I used native iOS speech recognition via <code>@react-native-voice/voice</code> for reliable on-device STT, and added a momentary-switch button on the ESP32 that force-disconnects paired clients when held for 5 seconds. For the full networking writeup, see the <a href="../09_networking/index.html">Week 9 page</a>.</p>
+
+<div style="width:100%; max-width:800px; margin: 20px auto;">
+  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+    <iframe
+      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+      src="https://www.youtube.com/embed/UDNO3XOB1e8"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
+
+<h4>3. Integration</h4>
+
+<p>Given that I already had a primitive housing from MVP week, the goal for this stretch was to finalize most of the "guts" of the project, which includes all of the visible input and output of the device. This includes:</p>
+
+<ul>
+  <li>Incorporating the battery</li>
+  <li>Incorporating the status LED</li>
+  <li>USB-C port</li>
+</ul>
+
+<p>This will put me in a good place to work on finalizing the housing, the mechanism for affixing the device to the interior of a car, and fine-tuning the user experience.</p>
+
+<h5>Battery</h5>
+
+<p>The battery subsystem needed to:</p>
+
+<ul>
+  <li>Power the ESP32 and the LED matrix from a single rechargeable cell</li>
+  <li>Charge over a USB-C port</li>
+  <li>Expose a measurable voltage for a state-of-charge estimate</li>
+  <li>Surface that estimate in the mobile app</li>
+</ul>
+
+<p>I first tried using the ESP32 Lipo board with a boost converter that would convert the 3.3V output to 5V for the MAX7219, but after some testing realized the MAX7219 was pulling too much current from the board and it was causing brownouts.</p>
+
+<img src="./integrated_1.png" alt="Brownout testing with ESP32 Lipo" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>Consequently, I decided to switch back to a normal ESP32 Dev board and use a different external Lipo battery. I switched to using a 1R0 charging module, which had a built-in boost converter, so by implementing a USB-C input I had purchased on Amazon the wiring would look like USB-C &rarr; Charging Module (with connection to Lipo) &rarr; 5V &rarr; LED display.</p>
+
+<p>I then set up a voltage divider from the battery to roughly measure the battery percentage:</p>
+
+<pre><code><span class="comment">// analogReadMilliVolts uses ESP32's factory ADC calibration</span>
+<span class="keyword">uint32_t</span> mv = <span class="function">analogReadMilliVolts</span>(batteryPin);
+<span class="keyword">float</span> voltage = (mv / <span class="number">1000.0f</span>) * batteryDividerRatio;
+
+<span class="comment">// Approximate charge percentage (clamped 0-100)</span>
+<span class="keyword">float</span> pct = (voltage - batteryMinV) / (batteryMaxV - batteryMinV) * <span class="number">100.0f</span>;
+<span class="keyword">if</span> (pct &lt; <span class="number">0</span>) pct = <span class="number">0</span>;
+<span class="keyword">if</span> (pct &gt; <span class="number">100</span>) pct = <span class="number">100</span>;
+</code></pre>
+
+<p>Next, I incorporated an RGB LED as an indicator for the battery (green for 80%+, yellow for 21%&ndash;79%, and red for 20% or below) with appropriate resistors (220&Omega; for red and 330&Omega; for the green and blue pins).</p>
+
+<p>After putting together the circuitry, it seemed to work, but without soldering it looked like one big mess.</p>
+
+<img src="./integrated_2.jpg" alt="Breadboard mess before soldering" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>I decided to use a small ElectroCookie breadboard, and to fit in it, an ESP32 Mini.</p>
+
+<img src="./integrated_3.jpg" alt="ESP32 Mini on ElectroCookie breadboard" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>This is the current circuitry (which I will update and make a lot prettier for the final version).</p>
+
+<img src="./integrated_4.jpeg" alt="Current circuitry diagram" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>I started soldering, using heat shrink to wrap soldered wires.</p>
+
+<img src="./integrated_5.jpg" alt="Soldering with heat shrink" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>I experienced issues with soldering to the connected pins on the MAX7219, so I removed those with copper braid.</p>
+
+<img src="./integrated_6.jpg" alt="Removing solder with copper braid" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>However, I think I removed one of the copper rings, because the panel stopped working. Using a multimeter, I determined it was the VCC pin, so fortunately I was able to solder to another VCC on the chain and it started working again. Here's the complete soldered guts!</p>
+
+<img src="./integrated_7.jpg" alt="Complete soldered internals" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>For now, I am keeping the same housing until I finalize the housing, but the key interaction pieces (USB-C, button, light) are all able to rest just outside the box.</p>
+
+<img src="./integrated_8.jpg" alt="Housing with USB-C, button, and LED exposed" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>Also, for the yellow light, it is not mixing the red and green, so I will need to figure out a way to disperse the light.</p>
+
+<img src="./integrated_9.jpg" alt="Yellow LED mixing issue" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>Finally I updated the Arduino code to publish the battery state over a BLE characteristic:</p>
+
+<pre><code><span class="comment">// Publish over BLE</span>
+<span class="keyword">if</span> (pBatteryCharacteristic != <span class="keyword">nullptr</span>) {
+  <span class="keyword">char</span> buf[<span class="number">48</span>];
+  <span class="keyword">int</span> intPct = (<span class="keyword">int</span>)(pct + <span class="number">0.5f</span>);
+  <span class="function">snprintf</span>(buf, <span class="keyword">sizeof</span>(buf), <span class="string">"{\"v\":%.2f,\"p\":%d}"</span>, voltage, intPct);
+  pBatteryCharacteristic-&gt;<span class="function">setValue</span>((<span class="keyword">uint8_t</span>*)buf, <span class="function">strlen</span>(buf));
+  <span class="keyword">if</span> (deviceConnected && intPct != lastReportedPct) {
+    pBatteryCharacteristic-&gt;<span class="function">notify</span>();
+    lastReportedPct = intPct;
+  }
+}
+</code></pre>
+
+<p>And then subscribed to it from the React Native app to display in the UI:</p>
+
+<pre><code><span class="comment">// Initial battery read</span>
+<span class="keyword">try</span> {
+  <span class="keyword">const</span> initial = <span class="keyword">await</span> discovered.<span class="function">readCharacteristicForService</span>(
+    SERVICE_UUID,
+    BATTERY_CHARACTERISTIC_UUID,
+  );
+  <span class="keyword">if</span> (initial.value) {
+    <span class="keyword">const</span> parsed = JSON.<span class="function">parse</span>(<span class="function">fromBase64</span>(initial.value));
+    <span class="function">setBattery</span>({ voltage: <span class="type">Number</span>(parsed.v), percent: <span class="type">Number</span>(parsed.p) });
+  }
+} <span class="keyword">catch</span> (e) {
+  console.<span class="function">log</span>(<span class="string">'Battery initial read failed:'</span>, e);
+}
+
+<span class="comment">// Subscribe to battery notifications</span>
+discovered.<span class="function">monitorCharacteristicForService</span>(
+  SERVICE_UUID,
+  BATTERY_CHARACTERISTIC_UUID,
+  (err, char) =&gt; {
+    <span class="keyword">if</span> (err) {
+      console.<span class="function">log</span>(<span class="string">'Battery monitor error:'</span>, err.message);
+      <span class="keyword">return</span>;
+    }
+    <span class="keyword">if</span> (!char?.value) <span class="keyword">return</span>;
+    <span class="keyword">try</span> {
+      <span class="keyword">const</span> parsed = JSON.<span class="function">parse</span>(<span class="function">fromBase64</span>(char.value));
+      <span class="function">setBattery</span>({ voltage: <span class="type">Number</span>(parsed.v), percent: <span class="type">Number</span>(parsed.p) });
+    } <span class="keyword">catch</span> (e) {
+      console.<span class="function">log</span>(<span class="string">'Battery parse error:'</span>, e);
+    }
+  },
+);
+</code></pre>
+
+<p>You can find the full code in <a href="https://github.com/calebcapoccia/ps70/tree/main/13_finalproject" target="_blank">this folder</a>. The updated Arduino code is in <code>integrated.ino</code>.</p>
+
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./integrated.ino" download>Download Integrated Arduino Code
+  </a>
+</div>
+<p class="margin">   </p>
+
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./CarDisplayApp/App.tsx" download>Download App.tsx
+  </a>
+</div>
+<p class="margin">   </p>
+
+<h5>Updated Demo</h5>
+
+<div style="width:100%; max-width:800px; margin: 20px auto;">
+  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+    <iframe
+      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+      src="https://www.youtube.com/embed/E8qa9FnE_jE"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
+
+<p class="margin">   </p>
 
 </div>
 </xmp>
