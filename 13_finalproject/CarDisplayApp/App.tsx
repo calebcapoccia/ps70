@@ -17,11 +17,19 @@ import Icon from 'react-native-vector-icons/Ionicons';
 
 const SERVICE_UUID = '6da6814e-13a5-4144-96a0-6db8d3b343c9';
 const CHARACTERISTIC_UUID = '82b3bdc2-ccf2-4063-b820-9a66322f8234';
+const BATTERY_CHARACTERISTIC_UUID = 'b2c3d4e5-1234-5678-9abc-def012345678';
 
 function toBase64(input: string): string {
   // @ts-ignore - btoa is available in React Native
   return btoa(unescape(encodeURIComponent(input)));
 }
+
+function fromBase64(input: string): string {
+  // @ts-ignore - atob is available in React Native
+  return decodeURIComponent(escape(atob(input)));
+}
+
+type Battery = { voltage: number; percent: number };
 
 export default function App() {
   const bleManager = useMemo(() => new BleManager(), []);
@@ -30,6 +38,7 @@ export default function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [battery, setBattery] = useState<Battery | null>(null);
   const speechTimeoutRef = React.useRef<number | null>(null);
   const isManualDisconnectRef = React.useRef(false);
   const hasShownDisconnectAlertRef = React.useRef(false);
@@ -186,6 +195,7 @@ export default function App() {
       const shouldShowAlert = !isManual && !isManualDisconnectRef.current && !hasShownDisconnectAlertRef.current;
             
       setConnectedDevice(null);
+      setBattery(null);
       
       if (shouldShowAlert) {
         hasShownDisconnectAlertRef.current = true;
@@ -200,6 +210,7 @@ export default function App() {
     } catch (error) {
       console.error('Disconnect error:', error);
       setConnectedDevice(null);
+      setBattery(null);
       isManualDisconnectRef.current = false;
       hasShownDisconnectAlertRef.current = false;
     }
@@ -223,6 +234,39 @@ export default function App() {
 
       setConnectedDevice(discovered);
       Alert.alert('Connected', `Connected to ${discovered.name ?? discovered.id}`);
+
+      // Initial battery read
+      try {
+        const initial = await discovered.readCharacteristicForService(
+          SERVICE_UUID,
+          BATTERY_CHARACTERISTIC_UUID,
+        );
+        if (initial.value) {
+          const parsed = JSON.parse(fromBase64(initial.value));
+          setBattery({ voltage: Number(parsed.v), percent: Number(parsed.p) });
+        }
+      } catch (e) {
+        console.log('Battery initial read failed:', e);
+      }
+
+      // Subscribe to battery notifications
+      discovered.monitorCharacteristicForService(
+        SERVICE_UUID,
+        BATTERY_CHARACTERISTIC_UUID,
+        (err, char) => {
+          if (err) {
+            console.log('Battery monitor error:', err.message);
+            return;
+          }
+          if (!char?.value) return;
+          try {
+            const parsed = JSON.parse(fromBase64(char.value));
+            setBattery({ voltage: Number(parsed.v), percent: Number(parsed.p) });
+          } catch (e) {
+            console.log('Battery parse error:', e);
+          }
+        },
+      );
     } catch (error) {
       console.error('Connection error:', error);
       Alert.alert('Connection failed', 'Could not connect to device.');
@@ -349,6 +393,21 @@ export default function App() {
               <Text style={tw`text-2xl font-bold text-green-900`}>
                 {connectedDevice.name || connectedDevice.id}
               </Text>
+              {battery && (
+                <View style={tw`flex-row items-center mt-3`}>
+                  <Icon
+                    name={battery.percent >= 80 ? 'battery-full' : battery.percent >= 20 ? 'battery-half' : 'battery-dead'}
+                    size={20}
+                    color={battery.percent >= 80 ? '#16a34a' : battery.percent >= 20 ? '#ca8a04' : '#dc2626'}
+                    style={tw`mr-2`}
+                  />
+                  <Text
+                    style={tw`text-sm font-semibold ${battery.percent >= 80 ? 'text-green-700' : battery.percent >= 20 ? 'text-yellow-700' : 'text-red-700'}`}
+                  >
+                    {battery.percent}% ({battery.voltage.toFixed(2)}V)
+                  </Text>
+                </View>
+              )}
             </View>
             <TouchableOpacity
               style={tw`bg-red-500 rounded-xl py-3 px-6 shadow-md`}
