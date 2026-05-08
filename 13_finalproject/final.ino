@@ -8,6 +8,7 @@
 #include <BLE2902.h>
 
 #include <ArduinoJson.h>
+#include <driver/rtc_io.h>
 
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
 #define MAX_DEVICES 8
@@ -21,7 +22,7 @@
 const int dataPin = 5;
 const int csPin = 18;
 const int clkPin = 23;
-const int btnPin = 19;
+const int btnPin = 4;  // Changed from 19 to 4 for RTC wake support
 
 const int redPin = 12;
 const int greenPin = 13;
@@ -29,7 +30,7 @@ const int bluePin = 15;
 
 const int batteryPin = 36; // ADC1_CH0 (VP) - analog input only
 
-String currentMessage = "Booting!";
+String currentMessage = "Kachow Ready!";
 uint16_t numScrolls = 1;
 uint16_t completedScrolls = 0;
 uint16_t currentPause = 0;
@@ -176,16 +177,36 @@ class Button {
   public:
     Button(int buttonPin) {
       pin = buttonPin;
+      isPressed = false;
     }
 
     void begin() {
       pinMode(pin, INPUT_PULLUP);
     }
 
+    bool isShortPress() {
+      bool currentState = (digitalRead(pin) == LOW);
+      
+      if (currentState && !isPressed) {
+        isPressed = true;
+        lastPressed = millis();
+        return false;
+      }
+      
+      if (!currentState && isPressed) {
+        unsigned long pressDuration = millis() - lastPressed;
+        isPressed = false;
+        
+        if (pressDuration < 1000) {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+
     bool isReset() {
-      // Check if currently pressed
       if (digitalRead(pin) == LOW) {
-        // If was already pressed, check if 5 seconds have passed. If not previously pressed, reset time
         unsigned long curTime = millis();
         if (isPressed) {
           if (curTime - lastPressed >= 5000) {
@@ -244,6 +265,32 @@ class LedMatrix {
 Button universalBtn(btnPin);
 LedMatrix ledDisplay(dataPin, clkPin, csPin);
 
+void enterDeepSleep() {
+  Serial.println("Entering deep sleep...");
+    
+  ledDisplay.clear();
+  
+  if (deviceConnected) {
+    pServer->disconnect(connectionId);
+    delay(100);
+  }
+  
+  // Wait for button to be released before sleeping
+  while (digitalRead(btnPin) == LOW) {
+    delay(10);
+  }
+  delay(50); // Extra debounce
+  
+  // Ensure pull-up is enabled and held during sleep
+  rtc_gpio_pullup_en((gpio_num_t)btnPin);
+  rtc_gpio_pulldown_dis((gpio_num_t)btnPin);
+  
+  // Use EXT1 wake source (supports more pins, wake on LOW)
+  esp_sleep_enable_ext1_wakeup(1ULL << btnPin, ESP_EXT1_WAKEUP_ALL_LOW);
+  
+  esp_deep_sleep_start();
+}
+
 void setup() {
   Serial.begin(9600);
   ledDisplay.begin(); // Start LED
@@ -288,13 +335,20 @@ void setup() {
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(true);
   pAdvertising->start();
+  
+  incomingMessage = true;  // Trigger boot message display
 }
 
 void loop() {
   // Periodically read battery and update LED color
   readBattery();
 
-  // Check if reset button held
+  // Check for short press (sleep)
+  if (universalBtn.isShortPress()) {
+    enterDeepSleep();
+  }
+
+  // Check if reset button held (force disconnect)
   if (universalBtn.isReset()) {
     if (deviceConnected) {
       pServer->disconnect(connectionId);
