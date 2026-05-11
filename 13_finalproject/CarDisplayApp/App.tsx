@@ -11,6 +11,7 @@ import {
   PermissionsAndroid,
   KeyboardAvoidingView,
   ScrollView,
+  Keyboard,
 } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 import Voice from '@react-native-voice/voice';
@@ -44,6 +45,8 @@ export default function App() {
   const speechTimeoutRef = React.useRef<number | null>(null);
   const isManualDisconnectRef = React.useRef(false);
   const hasShownDisconnectAlertRef = React.useRef(false);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const textInputRef = React.useRef<TextInput>(null);
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -405,8 +408,9 @@ export default function App() {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
           <ScrollView 
+            ref={scrollViewRef}
             style={tw`flex-1 px-4 pt-6`}
-            contentContainerStyle={tw`pb-6`}
+            contentContainerStyle={tw`pb-16`}
             keyboardShouldPersistTaps="handled"
           >
           <View style={tw`bg-green-50 rounded-2xl p-6 mb-6 border-2 border-green-200 shadow-sm`}>
@@ -460,10 +464,16 @@ export default function App() {
             )}
             <View style={tw`flex-row items-end mb-4`}>
               <TextInput
+                ref={textInputRef}
                 value={message}
                 onChangeText={setMessage}
                 placeholder="Enter message to display"
                 multiline
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 300);
+                }}
                 style={[
                   tw`flex-1 border border-gray-300 rounded-xl px-4 bg-gray-50 text-base text-gray-900 mr-2`,
                   { paddingTop: 12, paddingBottom: 12, maxHeight: 120 }
