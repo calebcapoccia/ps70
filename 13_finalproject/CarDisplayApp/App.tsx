@@ -109,11 +109,25 @@ export default function App() {
     };
 
     Voice.onSpeechError = (event) => {
-      console.error('Speech error:', event.error);
       setIsListening(false);
-      // Only show alert for non-1101 errors (1101 is just a timeout/end signal)
-      if (event.error?.code !== '1101') {
-        Alert.alert('Speech Recognition Error', event.error?.message || 'Could not recognize speech');
+      // Don't show alerts for common non-critical errors:
+      // 1101 = timeout/end signal
+      // 1110 = no speech detected
+      // recognition_fail with "No speech detected" message
+      const errorCode = event.error?.code;
+      const errorMessage = event.error?.message || '';
+      const isNoSpeechError = errorCode === '1101' || 
+                              errorCode === '1110' || 
+                              errorCode === 'recognition_fail' ||
+                              errorMessage.includes('No speech detected');
+      
+      if (isNoSpeechError) {
+        // Log as info, not error - this is expected behavior
+        console.log('Speech recognition ended:', errorMessage);
+      } else {
+        // Only log actual errors
+        console.error('Speech error:', event.error);
+        Alert.alert('Speech Recognition Error', errorMessage || 'Could not recognize speech');
       }
     };
     
