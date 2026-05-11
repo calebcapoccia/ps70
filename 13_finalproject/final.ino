@@ -9,6 +9,7 @@
 
 #include <ArduinoJson.h>
 #include <driver/rtc_io.h>
+#include <Adafruit_NeoPixel.h>
 
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
 #define MAX_DEVICES 8
@@ -24,11 +25,13 @@ const int csPin = 18;
 const int clkPin = 23;
 const int btnPin = 4;  // Changed from 19 to 4 for RTC wake support
 
-const int redPin = 12;
-const int greenPin = 13;
-const int bluePin = 15;
+const int neoPixelPin = 12;  // NeoPixel data pin
+const int fetGatePin = 2;    // MOSFET gate control for displays
 
 const int batteryPin = 36; // ADC1_CH0 (VP) - analog input only
+
+#define NUM_LEDS 1
+Adafruit_NeoPixel statusLED(NUM_LEDS, neoPixelPin, NEO_GRB + NEO_KHZ800);
 
 String currentMessage = "Kachow Ready!";
 uint16_t numScrolls = 1;
@@ -38,17 +41,21 @@ uint16_t currentSpeed = 25;
 bool scrolling = false;
 bool incomingMessage = false;
 
-void setRgb(bool r, bool g, bool b) {
-  digitalWrite(redPin, r ? HIGH : LOW);
-  digitalWrite(greenPin, g ? HIGH : LOW);
-  digitalWrite(bluePin, b ? HIGH : LOW);
+void setNeoPixelColor(uint8_t r, uint8_t g, uint8_t b) {
+  statusLED.setPixelColor(0, statusLED.Color(r, g, b));
+  statusLED.show();
+}
+
+void turnOffNeoPixel() {
+  statusLED.clear();
+  statusLED.show();
 }
 
 // Set LED color based on battery percent: >=80 green, 20-80 yellow, <20 red
 void setBatteryColor(float pct) {
-  if (pct >= 80.0f)      setRgb(false, true,  false); // Green
-  else if (pct >= 20.0f) setRgb(true,  true,  false); // Yellow (R+G)
-  else                   setRgb(true,  false, false); // Red
+  if (pct >= 80.0f)      setNeoPixelColor(0, 255, 0);   // Green
+  else if (pct >= 20.0f) setNeoPixelColor(255, 150, 0); // Yellow
+  else                   setNeoPixelColor(255, 0, 0);   // Red
 }
 
 // Battery monitoring state
@@ -270,6 +277,12 @@ void enterDeepSleep() {
     
   ledDisplay.clear();
   
+  // Turn off NeoPixel
+  turnOffNeoPixel();
+  
+  // Prevent phantom powering through data line
+  pinMode(neoPixelPin, INPUT);
+  
   if (deviceConnected) {
     pServer->disconnect(connectionId);
     delay(100);
@@ -280,6 +293,11 @@ void enterDeepSleep() {
     delay(10);
   }
   delay(50); // Extra debounce
+  
+  // Turn OFF MOSFET to cut power to displays
+  digitalWrite(fetGatePin, HIGH);
+  
+  delay(100);
   
   // Ensure pull-up is enabled and held during sleep
   rtc_gpio_pullup_en((gpio_num_t)btnPin);
@@ -293,12 +311,18 @@ void enterDeepSleep() {
 
 void setup() {
   Serial.begin(9600);
+  
+  // Initialize MOSFET control pin
+  pinMode(fetGatePin, OUTPUT);
+  digitalWrite(fetGatePin, LOW);  // Turn ON MOSFET (power to displays)
+  
   ledDisplay.begin(); // Start LED
 
-  pinMode(redPin, OUTPUT);
-  pinMode(greenPin, OUTPUT);
-  pinMode(bluePin, OUTPUT);
-  setRgb(true, false, false); // start on red
+  // Initialize NeoPixel
+  statusLED.begin();
+  statusLED.clear();
+  statusLED.show();
+  setNeoPixelColor(255, 0, 0); // start on red
 
   analogReadResolution(12);
   pinMode(batteryPin, INPUT);
