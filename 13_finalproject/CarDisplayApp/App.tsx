@@ -9,6 +9,8 @@ import {
   Alert,
   Platform,
   PermissionsAndroid,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 import Voice from '@react-native-voice/voice';
@@ -397,7 +399,16 @@ export default function App() {
       )}
 
       {connectedDevice && (
-        <View style={tw`flex-1 px-4 pt-6`}>
+        <KeyboardAvoidingView 
+          style={tw`flex-1`}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <ScrollView 
+            style={tw`flex-1 px-4 pt-6`}
+            contentContainerStyle={tw`pb-6`}
+            keyboardShouldPersistTaps="handled"
+          >
           <View style={tw`bg-green-50 rounded-2xl p-6 mb-6 border-2 border-green-200 shadow-sm`}>
             <View style={tw`items-center mb-4`}>
               <View style={tw`flex-row items-center mb-2`}>
@@ -447,18 +458,19 @@ export default function App() {
                 </View>
               </View>
             )}
-            <View style={tw`flex-row items-center mb-4`}>
+            <View style={tw`flex-row items-end mb-4`}>
               <TextInput
                 value={message}
                 onChangeText={setMessage}
                 placeholder="Enter message to display"
+                multiline
                 style={[
                   tw`flex-1 border border-gray-300 rounded-xl px-4 bg-gray-50 text-base text-gray-900 mr-2`,
-                  { paddingTop: 10, paddingBottom: 14 }
+                  { paddingTop: 12, paddingBottom: 12, maxHeight: 120 }
                 ]}
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="sentences"
-                textAlignVertical="center"
+                textAlignVertical="top"
               />
               <TouchableOpacity
                 style={tw`w-12 h-12 rounded-full items-center justify-center shadow-md ${isListening ? 'bg-red-500' : 'bg-blue-600'}`}
@@ -477,7 +489,8 @@ export default function App() {
               </View>
             </TouchableOpacity>
           </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       )}
     </SafeAreaView>
   );
