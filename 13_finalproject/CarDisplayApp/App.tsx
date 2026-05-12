@@ -9,6 +9,10 @@ import {
   Alert,
   Platform,
   PermissionsAndroid,
+  KeyboardAvoidingView,
+  ScrollView,
+  Keyboard,
+  Image,
 } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 import Voice from '@react-native-voice/voice';
@@ -42,6 +46,8 @@ export default function App() {
   const speechTimeoutRef = React.useRef<number | null>(null);
   const isManualDisconnectRef = React.useRef(false);
   const hasShownDisconnectAlertRef = React.useRef(false);
+  const scrollViewRef = React.useRef<ScrollView>(null);
+  const textInputRef = React.useRef<TextInput>(null);
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -109,11 +115,25 @@ export default function App() {
     };
 
     Voice.onSpeechError = (event) => {
-      console.error('Speech error:', event.error);
       setIsListening(false);
-      // Only show alert for non-1101 errors (1101 is just a timeout/end signal)
-      if (event.error?.code !== '1101') {
-        Alert.alert('Speech Recognition Error', event.error?.message || 'Could not recognize speech');
+      // Don't show alerts for common non-critical errors:
+      // 1101 = timeout/end signal
+      // 1110 = no speech detected
+      // recognition_fail with "No speech detected" message
+      const errorCode = event.error?.code;
+      const errorMessage = event.error?.message || '';
+      const isNoSpeechError = errorCode === '1101' || 
+                              errorCode === '1110' || 
+                              errorCode === 'recognition_fail' ||
+                              errorMessage.includes('No speech detected');
+      
+      if (isNoSpeechError) {
+        // Log as info, not error - this is expected behavior
+        console.log('Speech recognition ended:', errorMessage);
+      } else {
+        // Only log actual errors
+        console.error('Speech error:', event.error);
+        Alert.alert('Speech Recognition Error', errorMessage || 'Could not recognize speech');
       }
     };
     
@@ -320,18 +340,22 @@ export default function App() {
 
   return (
     <SafeAreaView style={tw`flex-1 bg-gray-50`}>
-      <View style={tw`bg-blue-600 px-6 py-8 shadow-lg`}>
+      <View style={[tw`px-6 py-8 shadow-lg`, { backgroundColor: '#C33332' }]}>
         <View style={tw`flex-row items-center justify-center mb-2`}>
-          <Icon name="car-sport" size={32} color="white" style={tw`mr-2`} />
+          <Image 
+            source={require('./Kachow_Outline.png')} 
+            style={tw`w-10 h-10 mr-3`}
+            resizeMode="contain"
+          />
           <Text style={tw`text-3xl font-bold text-white`}>Kachow</Text>
         </View>
-        <Text style={tw`text-sm text-blue-100 text-center`}>Bluetooth Control</Text>
+        <Text style={tw`text-sm text-white opacity-80 text-center`}>Bluetooth Control</Text>
       </View>
 
       {!connectedDevice && (
         <View style={tw`flex-1 px-4 pt-6`}>
           <TouchableOpacity
-            style={tw`rounded-xl py-4 px-6 shadow-md mb-6 ${isScanning ? 'bg-gray-400' : 'bg-blue-600'}`}
+            style={[tw`rounded-xl py-4 px-6 shadow-md mb-6`, isScanning ? tw`bg-gray-400` : { backgroundColor: '#C33332' }]}
             onPress={startScan}
             disabled={isScanning}
           >
@@ -383,7 +407,17 @@ export default function App() {
       )}
 
       {connectedDevice && (
-        <View style={tw`flex-1 px-4 pt-6`}>
+        <KeyboardAvoidingView 
+          style={tw`flex-1`}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
+          <ScrollView 
+            ref={scrollViewRef}
+            style={tw`flex-1 px-4 pt-6`}
+            contentContainerStyle={tw`pb-16`}
+            keyboardShouldPersistTaps="handled"
+          >
           <View style={tw`bg-green-50 rounded-2xl p-6 mb-6 border-2 border-green-200 shadow-sm`}>
             <View style={tw`items-center mb-4`}>
               <View style={tw`flex-row items-center mb-2`}>
@@ -410,7 +444,7 @@ export default function App() {
               )}
             </View>
             <TouchableOpacity
-              style={tw`bg-red-500 rounded-xl py-3 px-6 shadow-md`}
+              style={[tw`rounded-xl py-3 px-6 shadow-md`, { backgroundColor: '#8B0000' }]}
               onPress={() => handleDisconnect(true)}
             >
               <View style={tw`flex-row items-center justify-center`}>
@@ -433,28 +467,35 @@ export default function App() {
                 </View>
               </View>
             )}
-            <View style={tw`flex-row items-center mb-4`}>
+            <View style={tw`flex-row items-end mb-4`}>
               <TextInput
+                ref={textInputRef}
                 value={message}
                 onChangeText={setMessage}
                 placeholder="Enter message to display"
+                multiline
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 300);
+                }}
                 style={[
                   tw`flex-1 border border-gray-300 rounded-xl px-4 bg-gray-50 text-base text-gray-900 mr-2`,
-                  { paddingTop: 10, paddingBottom: 14 }
+                  { paddingTop: 12, paddingBottom: 12, maxHeight: 120 }
                 ]}
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="sentences"
-                textAlignVertical="center"
+                textAlignVertical="top"
               />
               <TouchableOpacity
-                style={tw`w-12 h-12 rounded-full items-center justify-center shadow-md ${isListening ? 'bg-red-500' : 'bg-blue-600'}`}
+                style={[tw`w-12 h-12 rounded-full items-center justify-center shadow-md`, isListening ? tw`bg-red-500` : { backgroundColor: '#C33332' }]}
                 onPress={isListening ? stopVoiceRecognition : startVoiceRecognition}
               >
                 <Icon name={isListening ? 'stop' : 'mic'} size={24} color="white" />
               </TouchableOpacity>
             </View>
             <TouchableOpacity
-              style={tw`bg-blue-600 rounded-xl py-4 px-6 shadow-md`}
+              style={[tw`rounded-xl py-4 px-6 shadow-md`, { backgroundColor: '#C33332' }]}
               onPress={sendMessage}
             >
               <View style={tw`flex-row items-center justify-center`}>
@@ -463,7 +504,8 @@ export default function App() {
               </View>
             </TouchableOpacity>
           </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       )}
     </SafeAreaView>
   );
