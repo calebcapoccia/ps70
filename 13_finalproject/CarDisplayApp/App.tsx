@@ -49,6 +49,7 @@ export default function App() {
   const [repeat, setRepeat] = useState(1);
   const [pause, setPause] = useState(0);
   const [speed, setSpeed] = useState(25);
+  const [brightness, setBrightness] = useState(8);
   const speechTimeoutRef = React.useRef<number | null>(null);
   const isManualDisconnectRef = React.useRef(false);
   const hasShownDisconnectAlertRef = React.useRef(false);
@@ -329,6 +330,7 @@ export default function App() {
       repeat: repeat,
       pause: pause,
       speed: speed,
+      brightness: brightness,
     });
 
     try {
@@ -505,7 +507,7 @@ export default function App() {
                 textAlignVertical="top"
               />
               <TouchableOpacity
-                style={[tw`w-12 h-12 rounded-full items-center justify-center shadow-md`, isListening ? tw`bg-red-500` : { backgroundColor: '#C33332' }]}
+                style={[tw`w-12 h-12 rounded-full items-center justify-center shadow-md`, isListening ? { backgroundColor: '#8B0000' } : { backgroundColor: '#C33332' }]}
                 onPress={isListening ? stopVoiceRecognition : startVoiceRecognition}
               >
                 <Icon name={isListening ? 'stop' : 'mic'} size={24} color="white" />
@@ -531,8 +533,16 @@ export default function App() {
         animationType="slide"
         onRequestClose={() => setShowSettingsModal(false)}
       >
-        <View style={tw`flex-1 justify-center items-center bg-black bg-opacity-50`}>
-          <View style={tw`bg-white rounded-3xl p-6 mx-6 w-11/12 shadow-2xl`}>
+        <TouchableOpacity 
+          style={tw`flex-1 justify-center items-center bg-black bg-opacity-50`}
+          activeOpacity={1}
+          onPress={() => setShowSettingsModal(false)}
+        >
+          <TouchableOpacity 
+            style={tw`bg-white rounded-3xl p-6 mx-6 w-11/12 shadow-2xl`}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={tw`flex-row items-center justify-between mb-6`}>
               <View style={tw`flex-row items-center`}>
                 <Icon name="settings" size={24} color="#C33332" style={tw`mr-2`} />
@@ -600,6 +610,25 @@ export default function App() {
               <Text style={tw`text-xs text-gray-500 mt-1`}>Scroll speed (lower = faster)</Text>
             </View>
 
+            <View style={tw`mb-6`}>
+              <View style={tw`flex-row items-center justify-between mb-2`}>
+                <Text style={tw`text-base font-semibold text-gray-700`}>Brightness</Text>
+                <Text style={tw`text-base font-bold text-gray-900`}>{brightness}</Text>
+              </View>
+              <Slider
+                style={tw`w-full h-10`}
+                minimumValue={0}
+                maximumValue={15}
+                step={1}
+                value={brightness}
+                onValueChange={setBrightness}
+                minimumTrackTintColor="#C33332"
+                maximumTrackTintColor="#d1d5db"
+                thumbTintColor="#C33332"
+              />
+              <Text style={tw`text-xs text-gray-500 mt-1`}>Display brightness (0 = dimmest, 15 = brightest)</Text>
+            </View>
+
             <TouchableOpacity
               style={[tw`rounded-xl py-4 px-6 shadow-md`, { backgroundColor: '#C33332' }]}
               onPress={() => setShowSettingsModal(false)}
@@ -609,8 +638,8 @@ export default function App() {
                 <Text style={tw`text-white text-lg font-semibold`}>Save Settings</Text>
               </View>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );

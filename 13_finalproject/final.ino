@@ -14,7 +14,6 @@
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW
 #define MAX_DEVICES 8
 
-// Come back and change later?
 #define SERVICE_UUID                "6da6814e-13a5-4144-96a0-6db8d3b343c9"
 #define CHARACTERISTIC_UUID         "82b3bdc2-ccf2-4063-b820-9a66322f8234"
 #define BATTERY_CHARACTERISTIC_UUID "b2c3d4e5-1234-5678-9abc-def012345678"
@@ -38,6 +37,7 @@ uint16_t numScrolls = 1;
 uint16_t completedScrolls = 0;
 uint16_t currentPause = 0;
 uint16_t currentSpeed = 25;
+uint8_t currentBrightness = 8;
 bool scrolling = false;
 bool incomingMessage = false;
 
@@ -142,6 +142,7 @@ class DisplayCallbacks : public BLECharacteristicCallbacks {
     numScrolls = max(1, doc["repeat"] | 1);
     currentPause = max(0, doc["pause"] | 0);
     currentSpeed = max(1, doc["speed"] | 25);
+    currentBrightness = constrain(doc["brightness"] | 8, 0, 15);
 
     completedScrolls = 0;
     incomingMessage = true;
@@ -241,9 +242,14 @@ class LedMatrix {
 
     void begin() {
       display.begin();
-      display.setIntensity(2);
+      display.setIntensity(8);
       display.displayClear();
       display.setTextAlignment(PA_RIGHT);
+    }
+
+    // Set brightness (0-15)
+    void setBrightness(uint8_t brightness) {
+      display.setIntensity(brightness);
     }
 
     // Scrolls 'message' at 'speed' with 'pause' in between
@@ -395,6 +401,7 @@ void loop() {
   // Wait for current scroll to finish before displaying new message
   if (incomingMessage && !scrolling) {
     completedScrolls = 0;
+    ledDisplay.setBrightness(currentBrightness);
     ledDisplay.startScroll(currentMessage, currentSpeed, currentPause);
     incomingMessage = false;
     scrolling = true;
