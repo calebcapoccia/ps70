@@ -481,7 +481,7 @@ export default function App() {
                 }}
                 style={[
                   tw`flex-1 border border-gray-300 rounded-xl px-4 bg-gray-50 text-base text-gray-900 mr-2`,
-                  { paddingTop: 12, paddingBottom: 12, maxHeight: 120 }
+                  { paddingTop: 14, paddingBottom: 14, minHeight: 52, maxHeight: 120 }
                 ]}
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="sentences"
