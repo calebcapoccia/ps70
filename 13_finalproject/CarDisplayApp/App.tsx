@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Keyboard,
+  Image,
 } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 import Voice from '@react-native-voice/voice';
@@ -339,18 +340,22 @@ export default function App() {
 
   return (
     <SafeAreaView style={tw`flex-1 bg-gray-50`}>
-      <View style={tw`bg-blue-600 px-6 py-8 shadow-lg`}>
+      <View style={[tw`px-6 py-8 shadow-lg`, { backgroundColor: '#C33332' }]}>
         <View style={tw`flex-row items-center justify-center mb-2`}>
-          <Icon name="car-sport" size={32} color="white" style={tw`mr-2`} />
+          <Image 
+            source={require('./Kachow_Outline.png')} 
+            style={tw`w-10 h-10 mr-3`}
+            resizeMode="contain"
+          />
           <Text style={tw`text-3xl font-bold text-white`}>Kachow</Text>
         </View>
-        <Text style={tw`text-sm text-blue-100 text-center`}>Bluetooth Control</Text>
+        <Text style={tw`text-sm text-white opacity-80 text-center`}>Bluetooth Control</Text>
       </View>
 
       {!connectedDevice && (
         <View style={tw`flex-1 px-4 pt-6`}>
           <TouchableOpacity
-            style={tw`rounded-xl py-4 px-6 shadow-md mb-6 ${isScanning ? 'bg-gray-400' : 'bg-blue-600'}`}
+            style={[tw`rounded-xl py-4 px-6 shadow-md mb-6`, isScanning ? tw`bg-gray-400` : { backgroundColor: '#C33332' }]}
             onPress={startScan}
             disabled={isScanning}
           >
@@ -439,7 +444,7 @@ export default function App() {
               )}
             </View>
             <TouchableOpacity
-              style={tw`bg-red-500 rounded-xl py-3 px-6 shadow-md`}
+              style={[tw`rounded-xl py-3 px-6 shadow-md`, { backgroundColor: '#8B0000' }]}
               onPress={() => handleDisconnect(true)}
             >
               <View style={tw`flex-row items-center justify-center`}>
@@ -483,14 +488,14 @@ export default function App() {
                 textAlignVertical="top"
               />
               <TouchableOpacity
-                style={tw`w-12 h-12 rounded-full items-center justify-center shadow-md ${isListening ? 'bg-red-500' : 'bg-blue-600'}`}
+                style={[tw`w-12 h-12 rounded-full items-center justify-center shadow-md`, isListening ? tw`bg-red-500` : { backgroundColor: '#C33332' }]}
                 onPress={isListening ? stopVoiceRecognition : startVoiceRecognition}
               >
                 <Icon name={isListening ? 'stop' : 'mic'} size={24} color="white" />
               </TouchableOpacity>
             </View>
             <TouchableOpacity
-              style={tw`bg-blue-600 rounded-xl py-4 px-6 shadow-md`}
+              style={[tw`rounded-xl py-4 px-6 shadow-md`, { backgroundColor: '#C33332' }]}
               onPress={sendMessage}
             >
               <View style={tw`flex-row items-center justify-center`}>
