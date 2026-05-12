@@ -49,6 +49,7 @@ export default function App() {
   const [repeat, setRepeat] = useState(1);
   const [pause, setPause] = useState(0);
   const [speed, setSpeed] = useState(25);
+  const [brightness, setBrightness] = useState(8);
   const speechTimeoutRef = React.useRef<number | null>(null);
   const isManualDisconnectRef = React.useRef(false);
   const hasShownDisconnectAlertRef = React.useRef(false);
@@ -329,6 +330,7 @@ export default function App() {
       repeat: repeat,
       pause: pause,
       speed: speed,
+      brightness: brightness,
     });
 
     try {
@@ -598,6 +600,25 @@ export default function App() {
                 thumbTintColor="#C33332"
               />
               <Text style={tw`text-xs text-gray-500 mt-1`}>Scroll speed (lower = faster)</Text>
+            </View>
+
+            <View style={tw`mb-6`}>
+              <View style={tw`flex-row items-center justify-between mb-2`}>
+                <Text style={tw`text-base font-semibold text-gray-700`}>Brightness</Text>
+                <Text style={tw`text-base font-bold text-gray-900`}>{brightness}</Text>
+              </View>
+              <Slider
+                style={tw`w-full h-10`}
+                minimumValue={0}
+                maximumValue={15}
+                step={1}
+                value={brightness}
+                onValueChange={setBrightness}
+                minimumTrackTintColor="#C33332"
+                maximumTrackTintColor="#d1d5db"
+                thumbTintColor="#C33332"
+              />
+              <Text style={tw`text-xs text-gray-500 mt-1`}>Display brightness (0 = dimmest, 15 = brightest)</Text>
             </View>
 
             <TouchableOpacity
