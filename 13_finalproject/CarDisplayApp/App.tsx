@@ -533,8 +533,16 @@ export default function App() {
         animationType="slide"
         onRequestClose={() => setShowSettingsModal(false)}
       >
-        <View style={tw`flex-1 justify-center items-center bg-black bg-opacity-50`}>
-          <View style={tw`bg-white rounded-3xl p-6 mx-6 w-11/12 shadow-2xl`}>
+        <TouchableOpacity 
+          style={tw`flex-1 justify-center items-center bg-black bg-opacity-50`}
+          activeOpacity={1}
+          onPress={() => setShowSettingsModal(false)}
+        >
+          <TouchableOpacity 
+            style={tw`bg-white rounded-3xl p-6 mx-6 w-11/12 shadow-2xl`}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={tw`flex-row items-center justify-between mb-6`}>
               <View style={tw`flex-row items-center`}>
                 <Icon name="settings" size={24} color="#C33332" style={tw`mr-2`} />
@@ -630,8 +638,8 @@ export default function App() {
                 <Text style={tw`text-white text-lg font-semibold`}>Save Settings</Text>
               </View>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
