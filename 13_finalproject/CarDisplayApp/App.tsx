@@ -507,7 +507,7 @@ export default function App() {
                 textAlignVertical="top"
               />
               <TouchableOpacity
-                style={[tw`w-12 h-12 rounded-full items-center justify-center shadow-md`, isListening ? tw`bg-red-500` : { backgroundColor: '#C33332' }]}
+                style={[tw`w-12 h-12 rounded-full items-center justify-center shadow-md`, isListening ? { backgroundColor: '#8B0000' } : { backgroundColor: '#C33332' }]}
                 onPress={isListening ? stopVoiceRecognition : startVoiceRecognition}
               >
                 <Icon name={isListening ? 'stop' : 'mic'} size={24} color="white" />
