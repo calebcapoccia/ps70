@@ -13,11 +13,13 @@ import {
   ScrollView,
   Keyboard,
   Image,
+  Modal,
 } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 import Voice from '@react-native-voice/voice';
 import tw from 'twrnc';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Slider from '@react-native-community/slider';
 
 const SERVICE_UUID = '6da6814e-13a5-4144-96a0-6db8d3b343c9';
 const CHARACTERISTIC_UUID = '82b3bdc2-ccf2-4063-b820-9a66322f8234';
@@ -43,6 +45,10 @@ export default function App() {
   const [message, setMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [battery, setBattery] = useState<Battery | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [repeat, setRepeat] = useState(1);
+  const [pause, setPause] = useState(0);
+  const [speed, setSpeed] = useState(25);
   const speechTimeoutRef = React.useRef<number | null>(null);
   const isManualDisconnectRef = React.useRef(false);
   const hasShownDisconnectAlertRef = React.useRef(false);
@@ -320,9 +326,9 @@ export default function App() {
 
     const payload = JSON.stringify({
       text: message,
-      repeat: 1,
-      pause: 0,
-      speed: 25,
+      repeat: repeat,
+      pause: pause,
+      speed: speed,
     });
 
     try {
@@ -341,13 +347,24 @@ export default function App() {
   return (
     <SafeAreaView style={tw`flex-1 bg-gray-50`}>
       <View style={[tw`px-6 py-8 shadow-lg`, { backgroundColor: '#C33332' }]}>
-        <View style={tw`flex-row items-center justify-center mb-2`}>
-          <Image 
-            source={require('./Kachow_Outline.png')} 
-            style={tw`w-10 h-10 mr-3`}
-            resizeMode="contain"
-          />
-          <Text style={tw`text-3xl font-bold text-white`}>Kachow</Text>
+        <View style={tw`flex-row items-center justify-between mb-2`}>
+          <View style={tw`flex-1`} />
+          <View style={tw`flex-row items-center`}>
+            <Image 
+              source={require('./Kachow_Outline.png')} 
+              style={tw`w-10 h-10 mr-3`}
+              resizeMode="contain"
+            />
+            <Text style={tw`text-3xl font-bold text-white`}>Kachow</Text>
+          </View>
+          <View style={tw`flex-1 items-end`}>
+            <TouchableOpacity
+              onPress={() => setShowSettingsModal(true)}
+              style={tw`p-2`}
+            >
+              <Icon name="settings-outline" size={28} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={tw`text-sm text-white opacity-80 text-center`}>Bluetooth Control</Text>
       </View>
@@ -481,7 +498,7 @@ export default function App() {
                 }}
                 style={[
                   tw`flex-1 border border-gray-300 rounded-xl px-4 bg-gray-50 text-base text-gray-900 mr-2`,
-                  { paddingTop: 12, paddingBottom: 12, maxHeight: 120 }
+                  { paddingTop: 14, paddingBottom: 14, minHeight: 52, maxHeight: 120 }
                 ]}
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="sentences"
@@ -507,6 +524,94 @@ export default function App() {
           </ScrollView>
         </KeyboardAvoidingView>
       )}
+
+      <Modal
+        visible={showSettingsModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowSettingsModal(false)}
+      >
+        <View style={tw`flex-1 justify-center items-center bg-black bg-opacity-50`}>
+          <View style={tw`bg-white rounded-3xl p-6 mx-6 w-11/12 shadow-2xl`}>
+            <View style={tw`flex-row items-center justify-between mb-6`}>
+              <View style={tw`flex-row items-center`}>
+                <Icon name="settings" size={24} color="#C33332" style={tw`mr-2`} />
+                <Text style={tw`text-2xl font-bold text-gray-900`}>Display Settings</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowSettingsModal(false)}>
+                <Icon name="close-circle" size={28} color="#9ca3af" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={tw`mb-6`}>
+              <View style={tw`flex-row items-center justify-between mb-2`}>
+                <Text style={tw`text-base font-semibold text-gray-700`}>Repeat</Text>
+                <Text style={tw`text-base font-bold text-gray-900`}>{repeat}x</Text>
+              </View>
+              <Slider
+                style={tw`w-full h-10`}
+                minimumValue={1}
+                maximumValue={10}
+                step={1}
+                value={repeat}
+                onValueChange={setRepeat}
+                minimumTrackTintColor="#C33332"
+                maximumTrackTintColor="#d1d5db"
+                thumbTintColor="#C33332"
+              />
+              <Text style={tw`text-xs text-gray-500 mt-1`}>Number of times to scroll the message</Text>
+            </View>
+
+            <View style={tw`mb-6`}>
+              <View style={tw`flex-row items-center justify-between mb-2`}>
+                <Text style={tw`text-base font-semibold text-gray-700`}>Pause</Text>
+                <Text style={tw`text-base font-bold text-gray-900`}>{pause}ms</Text>
+              </View>
+              <Slider
+                style={tw`w-full h-10`}
+                minimumValue={0}
+                maximumValue={5000}
+                step={100}
+                value={pause}
+                onValueChange={setPause}
+                minimumTrackTintColor="#C33332"
+                maximumTrackTintColor="#d1d5db"
+                thumbTintColor="#C33332"
+              />
+              <Text style={tw`text-xs text-gray-500 mt-1`}>Delay between scrolls (milliseconds)</Text>
+            </View>
+
+            <View style={tw`mb-6`}>
+              <View style={tw`flex-row items-center justify-between mb-2`}>
+                <Text style={tw`text-base font-semibold text-gray-700`}>Speed</Text>
+                <Text style={tw`text-base font-bold text-gray-900`}>{speed}</Text>
+              </View>
+              <Slider
+                style={tw`w-full h-10`}
+                minimumValue={1}
+                maximumValue={100}
+                step={1}
+                value={speed}
+                onValueChange={setSpeed}
+                minimumTrackTintColor="#C33332"
+                maximumTrackTintColor="#d1d5db"
+                thumbTintColor="#C33332"
+              />
+              <Text style={tw`text-xs text-gray-500 mt-1`}>Scroll speed (lower = faster)</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[tw`rounded-xl py-4 px-6 shadow-md`, { backgroundColor: '#C33332' }]}
+              onPress={() => setShowSettingsModal(false)}
+            >
+              <View style={tw`flex-row items-center justify-center`}>
+                <Icon name="checkmark-circle" size={20} color="white" style={tw`mr-2`} />
+                <Text style={tw`text-white text-lg font-semibold`}>Save Settings</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
