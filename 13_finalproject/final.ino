@@ -321,6 +321,9 @@ void setup() {
   // Initialize MOSFET control pin
   pinMode(fetGatePin, OUTPUT);
   digitalWrite(fetGatePin, LOW);  // Turn ON MOSFET (power to displays)
+
+  delay(750);  // let boost converter + capacitor + matrix stabilize
+
   
   ledDisplay.begin(); // Start LED
 
