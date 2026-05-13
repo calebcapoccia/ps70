@@ -1,5 +1,5 @@
 {
-  "name": "CarDisplayApp",
+  "name": "kachow",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-community/slider": "^5.2.0",
     "@react-native-voice/voice": "^3.2.4",
     "@react-native/new-app-screen": "^0.85.0",
     "react": "^19.2.3",
