@@ -339,7 +339,7 @@ void setup() {
   universalBtn.begin();
 
   // Begin BLE connection
-  BLEDevice::init("CarDisplay");
+  BLEDevice::init("Kachow Display");
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new DisplayServerCallbacks());
 
