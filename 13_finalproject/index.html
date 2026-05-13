@@ -220,6 +220,212 @@ discovered.<span class="function">monitorCharacteristicForService</span>(
   </div>
 </div>
 
+<h4>4. Final Stretch</h4>
+
+<p>Other end-of-the-semester projects ended up taking a lot of my time entering reading week. I then had roughly one week left to make improvements to the project. There were a number of things I could work on, like a published mobile app or a PCB-milled circuit board. However, while these would be nice add ons, the top priorities were to modify the setup to drain less power and to finalize housing. As in the past, I used generative AI tools to accelerate development for some aspects of the code and documentation.</p>
+
+<h5>Sleep Mode</h5>
+
+<p>Given that the ESP32 is constantly running and the MAX7219 is always draining power, I wanted a way of "turning off" the device without disconnecting the ESP32 from the breadboard, such that I would not need to recharge the battery every time I want to use the device again.</p>
+
+<p>I could accomplish this through setting the ESP32 to deep sleep mode, which would take significantly less battery, from the order of perhaps hours on the 3400mAh battery to months when in sleep mode. I added this code to put the device to sleep:</p>
+
+<pre><code><span class="keyword">void</span> <span class="function">enterDeepSleep</span>() {
+  Serial.<span class="function">println</span>(<span class="string">"Entering deep sleep..."</span>);
+    
+  ledDisplay.<span class="function">clear</span>();
+  
+  <span class="keyword">if</span> (deviceConnected) {
+    pServer-&gt;<span class="function">disconnect</span>(connectionId);
+    <span class="function">delay</span>(<span class="number">100</span>);
+  }
+  
+  <span class="comment">// Wait for button to be released before sleeping</span>
+  <span class="keyword">while</span> (<span class="function">digitalRead</span>(btnPin) == LOW) {
+    <span class="function">delay</span>(<span class="number">10</span>);
+  }
+  <span class="function">delay</span>(<span class="number">50</span>); <span class="comment">// Extra debounce</span>
+  
+  <span class="comment">// Ensure pull-up is enabled and held during sleep</span>
+  <span class="function">rtc_gpio_pullup_en</span>((gpio_num_t)btnPin);
+  <span class="function">rtc_gpio_pulldown_dis</span>((gpio_num_t)btnPin);
+  
+  <span class="comment">// Use EXT1 wake source (supports more pins, wake on LOW)</span>
+  <span class="function">esp_sleep_enable_ext1_wakeup</span>(<span class="number">1ULL</span> &lt;&lt; btnPin, ESP_EXT1_WAKEUP_ALL_LOW);
+  
+  <span class="function">esp_deep_sleep_start</span>();
+}
+</code></pre>
+
+<p>However, I would also need to wake it up with the button, so I soldered the button to an RTC pin. I still had the issue with the LED not mixing colors, so I decided to experiment with and then switch to a NeoPixel LED.</p>
+
+<img src="./final_progress_photos/final_progress_1.jpg" alt="Button soldered to RTC pin" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>Even in deep sleep, the MAX7219s and the NeoPixel LED would still draw current, so I would need some way of logically gating the power to the lights. I decided to add a P-channel MOSFET because it allowed me to cleanly switch to the 5V rail while keeping all of the grounds connected.</p>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 20px 0;">
+  <img src="./final_progress_photos/final_progress_2.png" alt="MOSFET circuit diagram" style="height: 300px; width: auto;">
+  <img src="./final_progress_photos/final_progress_3.jpg" alt="MOSFET implementation" style="height: 300px; width: auto;">
+</div>
+
+<p>Additionally, I found a 1x8 MAX7219 display, so integrated this instead of the 2 1x4 displays I had prior, which were bending at their soldered connection.</p>
+
+<img src="./final_progress_photos/final_progress_4.jpg" alt="1x8 MAX7219 display" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>I also swapped out the button to a nicer one that I could integrate into the housing, as well as changing the USB-C port to one that I could embed in the housing wall as well.</p>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 20px 0;">
+  <img src="./final_progress_photos/final_progress_5.jpg" alt="New button" style="height: 250px; width: auto;">
+  <img src="./final_progress_photos/final_progress_6.jpg" alt="New USB-C port" style="height: 250px; width: auto;">
+</div>
+
+<p>For the new circuitry with the MOSFET, while breadboarding I started experiencing brownout issues, likely from the MAX7219 draining too much power when drawing from 5V through the MOSFET. Consequently, I added a 1000uF capacitor connected to the MOSFET drain and ground to absorb the current spikes and prevent the flickering brownouts. Additionally, I added a 10K ohm resistor between the gate and the source to prevent the MOSFET from randomly partially turning on.</p>
+
+<img src="./final_progress_photos/final_progress_7.jpg" alt="Capacitor and resistor added" style="max-width: 400px; display:block; margin:0 auto;">
+
+<p>This is the final circuit diagram for the setup.</p>
+
+<img src="./final_progress_photos/final_progress_8.jpg" alt="Final circuit diagram" style="max-width: 600px; display:block; margin:0 auto;">
+
+<h6>A Few Limitations</h6>
+
+<p>Given that the USB-C port does not contain the circuitry required for a C to C connection, I currently need to use USB-A to USB-C cables to power the device. Additionally, when the device is "off" in deep sleep, the charging module seems to shut off due to lack of current draw, and it only boots up again when plugging in the USB-C connection.</p>
+
+<h5>Final Housing</h5>
+
+<p>While I liked the MVP aesthetics of wood, I knew that I wanted to 3D print a sleek housing for the LEDs and all of the components inside, especially so that I could mount it inside of a car.</p>
+
+<h6>Outer Housing</h6>
+
+<p>For the MVP box, the lid comes off, but because I want to mount this device from the top or bottom, the entire box would need to be securely locked. To seal the box from the outside, I designed a slot mechanism that is fastened by a secured nut on the inside.</p>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 20px 0;">
+  <img src="./final_progress_photos/final_progress_9.jpg" alt="Slot mechanism design" style="height: 300px; width: auto;">
+  <img src="./final_progress_photos/final_progress_10.jpg" alt="Slot mechanism closeup" style="height: 300px; width: auto;">
+</div>
+
+<p>For testing out this mechanism, along with several other pieces of the housing, I conducted mini test prints where I could make sure the prints would align with the other components in the system (like a button) before doing large prints that would eat up printer time. To reduce re-prints, I made the housing quite modular. Besides the locking mechanism, the outer housing only has screw holes for various features, like the clamps, which I only modified slightly from the MVP and reprinted, and holes for securing future pieces.</p>
+
+<p class="margin">   </p>
+<div style="text-align: center;">
+  <script src="https://embed.github.com/view/3d/calebcapoccia/ps70/main/13_finalproject/Main_body.stl"></script>
+</div>
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./Main_body.stl" download>Download Main Housing STL
+  </a>
+</div>
+<p class="margin">   </p>
+
+<p class="margin">   </p>
+<div style="text-align: center;">
+  <script src="https://embed.github.com/view/3d/calebcapoccia/ps70/main/13_finalproject/Closure_body.stl"></script>
+</div>
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./Closure_body.stl" download>Download Closing Panel STL
+  </a>
+</div>
+<p class="margin">   </p>
+
+<p>The 14 hour print on the Prusa XL ended up coming out quite well, and even though there were a few small issues like the slot inserts being a little thick (which I sanded down) or the clamp spacing being a little off (so I printed new clamps), it would definitely be usable and I could free the printer for other students.</p>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 20px 0;">
+  <img src="./final_progress_photos/final_progress_11.jpg" alt="14 hour print result" style="height: 250px; width: auto;">
+  <img src="./final_progress_photos/final_progress_12.jpg" alt="Print detail 1" style="height: 250px; width: auto;">
+  <img src="./final_progress_photos/final_progress_13.jpg" alt="Print detail 2" style="height: 250px; width: auto;">
+  <img src="./final_progress_photos/final_progress_14.jpg" alt="Print detail 3" style="height: 250px; width: auto;">
+</div>
+
+<h6>Inner Housing</h6>
+
+<p>I then designed an interior housing that would fix the battery, breadboard, NeoPixel, and button into place. After several iterations and broken prints later, I got something that worked pretty well.</p>
+
+<p class="margin">   </p>
+<div style="text-align: center;">
+  <script src="https://embed.github.com/view/3d/calebcapoccia/ps70/main/13_finalproject/internal_housing.stl"></script>
+</div>
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./internal_housing.stl" download>Download Internal Housing STL
+  </a>
+</div>
+<p class="margin">   </p>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 20px 0;">
+  <img src="./final_progress_photos/final_progress_15.jpg" alt="Internal housing installed" style="height: 300px; width: auto;">
+  <img src="./final_progress_photos/final_progress_16.jpg" alt="Internal housing detail" style="height: 300px; width: auto;">
+</div>
+
+<p>I also designed a cover for the charging module light so that it would not bleed into the the box and be visible, as well as laser cut a piece of frosted acrylic to press fit into the outer housing that covers the NeoPixel.</p>
+
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./charging_module_cover.stl" download>Download Charging Module Cover STL
+  </a>
+</div>
+<p class="margin">   </p>
+
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./Light_cut_final.dxf" download>Download Light Piece DXF
+  </a>
+</div>
+<p class="margin">   </p>
+
+<h6>Mount</h6>
+
+<p>Instead of reinventing the wheel for some pieces of the mount, I decided to purchase a <a href="https://www.amazon.com/dp/B00F54LGJK?ref=ppx_yo2ov_dt_b_fed_asin_title" target="_blank">RAM suction cup mount base</a> and <a href="https://www.amazon.com/dp/B005KWPJ04?ref=ppx_yo2ov_dt_b_fed_asin_title&th=1" target="_blank">socket arm</a>, which then freed up time to work on the other important parts of the project. I then designed a mount for the device that used a dovetail mechanism attached to a ball that could then fit into the socket arm.</p>
+
+<p class="margin">   </p>
+<div style="text-align: center;">
+  <script src="https://embed.github.com/view/3d/calebcapoccia/ps70/main/13_finalproject/mount_plate.stl"></script>
+</div>
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./mount_plate.stl" download>Download Mount Plate STL
+  </a>
+</div>
+<p class="margin">   </p>
+
+<p class="margin">   </p>
+<div style="text-align: center;">
+  <script src="https://embed.github.com/view/3d/calebcapoccia/ps70/main/13_finalproject/mount_connector.stl"></script>
+</div>
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./mount_connector.stl" download>Download Mount Connector STL
+  </a>
+</div>
+<p class="margin">   </p>
+
+<img src="./final_progress_photos/final_progress_17.jpg" alt="Mount assembly" style="max-width: 400px; display:block; margin:0 auto;">
+
+<h5>Code</h5>
+
+<p>I modified the app's UI to feel more playful and in theme with the inspiration for this project, Lightning McQueen. I updated the text input for better handling, including multi-line input, and I added a settings modal to adjust parameters for the LED display. This also involved modifying the Arduino code to allow brightness to be configurable. Here is the new app experience:</p>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 20px 0;">
+  <img src="./final_progress_photos/final_progress_18.png" alt="App UI 1" style="height: 400px; width: auto;">
+  <img src="./final_progress_photos/final_progress_19.png" alt="App UI 2" style="height: 400px; width: auto;">
+  <img src="./final_progress_photos/final_progress_20.png" alt="App UI 3" style="height: 400px; width: auto;">
+</div>
+
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./final.ino" download>Download Final Arduino Code
+  </a>
+</div>
+<p class="margin">   </p>
+
+<p>As usual, the full code is available on the <a href="https://github.com/calebcapoccia/ps70/tree/main/13_finalproject" target="_blank">GitHub repository.</a></p>
+
+<h5>Reflection and Future Directions</h5>
+
+<p>The updated demo is on the main page for the project. This was an absolute blast to put together over the course of several months. As a CS major, this stretched me in an entirely new dimension of building, and I want to continue to find ways of integrating more hardware into my work. I am grateful to the teaching staff, especially Bobby, for their guidance with the project, and to my friends who humored me as I excitedly demoed pieces of the project to them.</p>
+
+<p>If I continue working on the project, I would make some adjustments to the housing to give it an even cleaner product feel; adjust the circuitry so that I can use any USB-C to charge, use a charging module that does not time out, and PCB mill a circuit board to reduce space and room for error with wires; and publish the app onto the App Store!</p>
+
 <p class="margin">   </p>
 
 </div>
