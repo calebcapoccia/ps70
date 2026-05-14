@@ -153,7 +153,7 @@
 
 <p>I first tried using the ESP32 Lipo board with a boost converter that would convert the 3.3V output to 5V for the MAX7219, but after some testing realized the MAX7219 was pulling too much current from the board and it was causing brownouts.</p>
 
-<img src="./integrated_1.png" alt="Brownout testing with ESP32 Lipo" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_1.png" alt="Brownout testing with ESP32 Lipo" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>Consequently, I decided to switch back to a normal ESP32 Dev board and use a different external Lipo battery. I switched to using a 1R0 charging module, which had a built-in boost converter, so by implementing a USB-C input I had purchased on Amazon the wiring would look like USB-C &rarr; Charging Module (with connection to Lipo) &rarr; 5V &rarr; LED display.</p>
 
@@ -173,35 +173,35 @@
 
 <p>After putting together the circuitry, it seemed to work, but without soldering it looked like one big mess.</p>
 
-<img src="./integrated_2.jpg" alt="Breadboard mess before soldering" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_2.jpg" alt="Breadboard mess before soldering" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>I decided to use a small ElectroCookie breadboard, and to fit in it, an ESP32 Mini.</p>
 
-<img src="./integrated_3.jpg" alt="ESP32 Mini on ElectroCookie breadboard" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_3.jpg" alt="ESP32 Mini on ElectroCookie breadboard" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>This is the current circuitry (which I will update and make a lot prettier for the final version).</p>
 
-<img src="./integrated_4.jpeg" alt="Current circuitry diagram" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_4.jpeg" alt="Current circuitry diagram" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>I started soldering, using heat shrink to wrap soldered wires.</p>
 
-<img src="./integrated_5.jpg" alt="Soldering with heat shrink" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_5.jpg" alt="Soldering with heat shrink" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>I experienced issues with soldering to the connected pins on the MAX7219, so I removed those with copper braid.</p>
 
-<img src="./integrated_6.jpg" alt="Removing solder with copper braid" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_6.jpg" alt="Removing solder with copper braid" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>However, I think I removed one of the copper rings, because the panel stopped working. Using a multimeter, I determined it was the VCC pin, so fortunately I was able to solder to another VCC on the chain and it started working again. Here's the complete soldered guts!</p>
 
-<img src="./integrated_7.jpg" alt="Complete soldered internals" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_7.jpg" alt="Complete soldered internals" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>For now, I am keeping the same housing until I finalize the housing, but the key interaction pieces (USB-C, button, light) are all able to rest just outside the box.</p>
 
-<img src="./integrated_8.jpg" alt="Housing with USB-C, button, and LED exposed" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_8.jpg" alt="Housing with USB-C, button, and LED exposed" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>Also, for the yellow light, it is not mixing the red and green, so I will need to figure out a way to disperse the light.</p>
 
-<img src="./integrated_9.jpg" alt="Yellow LED mixing issue" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_9.jpg" alt="Yellow LED mixing issue" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>Finally I updated the Arduino code to publish the battery state over a BLE characteristic:</p>
 
