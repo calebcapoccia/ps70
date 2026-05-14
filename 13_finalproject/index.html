@@ -19,6 +19,48 @@
   </div>
 </nav>
 
+<style>
+.tab-container {
+  margin: 20px 0;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 10px;
+  border-bottom: 2px solid #333;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  color: #333;
+}
+
+.tab-button.active {
+  color: #000;
+  border-bottom-color: #000;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+</style>
+
 <body>
 <xmp style="display:none;">
 <div class="textcontainer typewriter-texture">
@@ -28,7 +70,216 @@
 
 <p>My final project is a car-mounted scrolling LED display controlled over Bluetooth from a mobile app with speech-to-text input. A driver (or passenger) can dictate a message into the app, have it transcribed via on-device STT, and send it via BLE to the ESP32 in the display, which scrolls the message across a MAX7219 LED matrix affixed to the rear dashboard.</p>
 
-<img src="./integrated_headline.png" alt="Kachow car display headline" style="max-width: 600px; display:block; margin:0 auto;">
+<div style="width:100%; max-width:800px; margin: 20px auto;">
+  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+    <iframe
+      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+      src="https://www.youtube.com/embed/jNMZ8eUeOno"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
+
+<div class="tab-container">
+  <div class="tab-buttons">
+    <button class="tab-button active" onclick="switchTab('product')">Product</button>
+    <button class="tab-button" onclick="switchTab('process')">Process</button>
+  </div>
+
+  <div id="product-tab" class="tab-content active">
+
+<h4>The Device</h4>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin: 20px 0;">
+  <img src="./Kachow_Front.jpg" alt="Kachow Display - Front View" style="height: 400px; width: auto;">
+  <img src="./Kachow_Back.jpg" alt="Kachow Display - Back View" style="height: 400px; width: auto;">
+</div>
+
+<h5>Key Features</h5>
+
+<ul>
+  <li><strong>Bluetooth-Controlled LED Display</strong> - Wirelessly send messages from your phone to scroll across the 1x8 MAX7219 LED matrix</li>
+  <li><strong>Speech-to-Text Integration</strong> - Dictate messages using on-device voice recognition in the mobile app</li>
+  <li><strong>Rechargeable Battery</strong> - 3400mAh LiPo battery with USB-C charging and deep sleep mode for extended battery life (months in standby)</li>
+  <li><strong>Car-Mountable Design</strong> - Custom 3D-printed housing with RAM mount compatibility for secure dashboard mounting</li>
+  <li><strong>Configurable Display</strong> - Adjust brightness, scroll speed, pause duration, and repeat count through the app</li>
+  <li><strong>Status Indicator</strong> - NeoPixel LED shows battery level (green 80%+, yellow 21-79%, red ≤20%)</li>
+</ul>
+
+<h5>Materials</h5>
+
+<p><strong>Electronics:</strong></p>
+<ul>
+  <li>ESP32 Mini microcontroller</li>
+  <li>1x8 MAX7219 LED matrix display</li>
+  <li>3400mAh LiPo battery</li>
+  <li>1R0 charging module with built-in boost converter</li>
+  <li>USB-C charging port</li>
+  <li>P-channel MOSFET (power gating)</li>
+  <li>NeoPixel RGB LED (status indicator)</li>
+  <li>Momentary push button (RTC-compatible for wake from sleep)</li>
+  <li>1000µF capacitor (power stabilization)</li>
+  <li>10kΩ resistor (MOSFET gate pull-down)</li>
+  <li>100kΩ resistors (2x for voltage divider - battery monitoring)</li>
+  <li>1kΩ resistor (NeoPixel data line)</li>
+  <li>ElectroCookie breadboard</li>
+</ul>
+
+<p><strong>Housing & Mount:</strong></p>
+<ul>
+  <li>3D-printed main housing body</li>
+  <li>3D-printed closing panel</li>
+  <li>3D-printed internal component housing</li>
+  <li>3D-printed mount plate and connector</li>
+  <li>3D-printed charging module light cover</li>
+  <li>Laser-cut frosted acrylic light diffuser</li>
+  <li>RAM suction cup mount base (purchased)</li>
+  <li>RAM socket arm (purchased)</li>
+</ul>
+
+<h5>Circuit</h5>
+
+<p>The circuit uses an ESP32 Mini as the central controller, managing BLE communication, the MAX7219 LED display, battery monitoring, and power management through a P-channel MOSFET that gates power to the display and NeoPixel during deep sleep.</p>
+
+<img src="./final_progress_photos/final_progress_8.jpg" alt="Final circuit diagram" style="max-width: 600px; display:block; margin:20px auto;">
+
+<h5>Architecture</h5>
+
+<p>The Kachow Display operates as a Bluetooth Low Energy peripheral device. The React Native mobile app acts as the central device, scanning for and connecting to the ESP32. Once connected, the app can send JSON payloads containing the message text and display parameters (speed, pause, repeat, brightness) via BLE characteristics.</p>
+
+<p>The ESP32 parses incoming messages using ArduinoJson and updates the MAX7219 display with non-blocking scrolling animation. Battery voltage is monitored through a voltage divider and published back to the app via BLE notifications, updating the UI in real-time.</p>
+
+<p>To conserve power, the device implements ESP32 deep sleep mode. When the button is held, the ESP32 disconnects BLE, clears the display, and uses the MOSFET to cut power to the MAX7219 and NeoPixel before entering deep sleep. The button is configured as an EXT1 wake source on an RTC-compatible pin, allowing the device to wake when pressed.</p>
+
+<h5>Downloads & Code</h5>
+
+<p class="margin">   </p>
+<div class="flexrow">
+  <a id="btn" href="./Kachow CAD.f3d" download>Download Kachow CAD File (Fusion 360)
+  </a>
+</div>
+<p class="margin">   </p>
+
+<div class="flexrow">
+  <a id="btn" href="./final.ino" download>Download Final Arduino Code
+  </a>
+</div>
+<p class="margin">   </p>
+
+<p>The complete source code for both the Arduino firmware and React Native mobile app is available on the <a href="https://github.com/calebcapoccia/ps70/tree/main/13_finalproject" target="_blank">GitHub repository</a>.</p>
+
+<p class="margin">   </p>
+
+<h4>The Device in Action</h4>
+
+<h5>How to Use</h5>
+
+<p><strong>Device Setup:</strong></p>
+<ol>
+  <li>Charge the device via USB-C (use USB-A to USB-C cable)</li>
+  <li>Press the button to wake the device from sleep (if in sleep mode)</li>
+  <li>The device will begin advertising as "Kachow Display" over Bluetooth</li>
+  <li>The NeoPixel LED indicates battery status: green (80%+), yellow (21-79%), red (≤20%)</li>
+</ol>
+
+<p><strong>Mobile App - Development Build:</strong></p>
+<p><em>For testing during development (debug mode with Metro bundler):</em></p>
+
+<p>Prerequisites:</p>
+<ul>
+  <li>Complete <a href="https://reactnative.dev/docs/set-up-your-environment" target="_blank">React Native environment setup</a></li>
+  <li>For iOS: Xcode and CocoaPods installed</li>
+  <li>For Android: Android Studio and SDK installed</li>
+  <li><strong>Physical device required</strong> - BLE does not work in simulators/emulators</li>
+</ul>
+
+<p>Build Steps:</p>
+<ol>
+  <li>Clone the repository and navigate to <code>CarDisplayApp/</code></li>
+  <li>Install dependencies: <code>npm install</code></li>
+  <li>For iOS only:
+    <pre><code>cd ios
+bundle install
+bundle exec pod install
+cd ..</code></pre>
+  </li>
+  <li>Run the app in debug mode:
+    <ul>
+      <li><strong>iOS:</strong> <code>npm run ios</code></li>
+      <li><strong>Android:</strong> <code>npm run android</code></li>
+    </ul>
+  </li>
+  <li>The app will build and install on your connected device with hot reloading enabled</li>
+</ol>
+
+<p><strong>Mobile App - Release Build:</strong></p>
+<p><em>For production builds (optimized, no Metro bundler required):</em></p>
+
+<p>Prerequisites: Same as development build</p>
+
+<p>Build Steps:</p>
+<ol>
+  <li>Navigate to <code>CarDisplayApp/</code></li>
+  <li>Build in release mode:
+    <ul>
+      <li><strong>iOS:</strong> <code>npx react-native run-ios --mode Release</code></li>
+      <li><strong>Android:</strong> <code>npx react-native run-android --mode=release</code></li>
+    </ul>
+  </li>
+  <li>The optimized app will be installed on your device</li>
+</ol>
+
+<p><strong>Connecting & Sending Messages:</strong></p>
+<ol>
+  <li>Open the Kachow Display app</li>
+  <li>Tap "Scan for Devices" - the app will search for nearby Kachow Display devices</li>
+  <li>Select your device from the list to connect</li>
+  <li>Once connected, you can:
+    <ul>
+      <li>Type a message directly in the text input</li>
+      <li>Tap the microphone icon to use speech-to-text</li>
+      <li>Adjust settings (brightness, speed, pause, repeat) via the settings icon</li>
+    </ul>
+  </li>
+  <li>Tap "Send" to display your message on the LED matrix</li>
+  <li>The battery indicator in the app shows the current charge level</li>
+</ol>
+
+<p><strong>Power Management:</strong></p>
+<ul>
+  <li>Short press the button to enter deep sleep mode (conserves battery for months)</li>
+  <li>Hold the button for 5 seconds to force disconnect from the app</li>
+  <li>Press the button once to wake from sleep</li>
+  <li>The NeoPixel LED indicates battery status: green (80%+), yellow (21-79%), red (≤20%)</li>
+</ul>
+
+<h5>Demo Videos</h5>
+
+<p><strong>Extended Demo:</strong></p>
+
+<div style="width:100%; max-width:800px; margin: 20px auto;">
+  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+    <iframe
+      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+      src="https://www.youtube.com/embed/0HCGkdnLs9k"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
+
+<p class="margin">   </p>
+
+<p><em>For detailed build documentation, design iterations, and technical deep-dives, please view the <strong>"Process"</strong> tab above.</em></p>
+
+<p class="margin">   </p>
+
+  </div>
+
+  <div id="process-tab" class="tab-content">
 
 <h4>1. MVP</h4>
 
@@ -89,7 +340,7 @@
 
 <p>I first tried using the ESP32 Lipo board with a boost converter that would convert the 3.3V output to 5V for the MAX7219, but after some testing realized the MAX7219 was pulling too much current from the board and it was causing brownouts.</p>
 
-<img src="./integrated_1.png" alt="Brownout testing with ESP32 Lipo" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_1.png" alt="Brownout testing with ESP32 Lipo" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>Consequently, I decided to switch back to a normal ESP32 Dev board and use a different external Lipo battery. I switched to using a 1R0 charging module, which had a built-in boost converter, so by implementing a USB-C input I had purchased on Amazon the wiring would look like USB-C &rarr; Charging Module (with connection to Lipo) &rarr; 5V &rarr; LED display.</p>
 
@@ -109,35 +360,35 @@
 
 <p>After putting together the circuitry, it seemed to work, but without soldering it looked like one big mess.</p>
 
-<img src="./integrated_2.jpg" alt="Breadboard mess before soldering" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_2.jpg" alt="Breadboard mess before soldering" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>I decided to use a small ElectroCookie breadboard, and to fit in it, an ESP32 Mini.</p>
 
-<img src="./integrated_3.jpg" alt="ESP32 Mini on ElectroCookie breadboard" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_3.jpg" alt="ESP32 Mini on ElectroCookie breadboard" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>This is the current circuitry (which I will update and make a lot prettier for the final version).</p>
 
-<img src="./integrated_4.jpeg" alt="Current circuitry diagram" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_4.jpeg" alt="Current circuitry diagram" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>I started soldering, using heat shrink to wrap soldered wires.</p>
 
-<img src="./integrated_5.jpg" alt="Soldering with heat shrink" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_5.jpg" alt="Soldering with heat shrink" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>I experienced issues with soldering to the connected pins on the MAX7219, so I removed those with copper braid.</p>
 
-<img src="./integrated_6.jpg" alt="Removing solder with copper braid" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_6.jpg" alt="Removing solder with copper braid" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>However, I think I removed one of the copper rings, because the panel stopped working. Using a multimeter, I determined it was the VCC pin, so fortunately I was able to solder to another VCC on the chain and it started working again. Here's the complete soldered guts!</p>
 
-<img src="./integrated_7.jpg" alt="Complete soldered internals" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_7.jpg" alt="Complete soldered internals" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>For now, I am keeping the same housing until I finalize the housing, but the key interaction pieces (USB-C, button, light) are all able to rest just outside the box.</p>
 
-<img src="./integrated_8.jpg" alt="Housing with USB-C, button, and LED exposed" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_8.jpg" alt="Housing with USB-C, button, and LED exposed" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>Also, for the yellow light, it is not mixing the red and green, so I will need to figure out a way to disperse the light.</p>
 
-<img src="./integrated_9.jpg" alt="Yellow LED mixing issue" style="max-width: 400px; display:block; margin:0 auto;">
+<img src="./integrated_photos/integrated_9.jpg" alt="Yellow LED mixing issue" style="max-width: 400px; display:block; margin:0 auto;">
 
 <p>Finally I updated the Arduino code to publish the battery state over a BLE characteristic:</p>
 
@@ -442,11 +693,14 @@ discovered.<span class="function">monitorCharacteristicForService</span>(
 
 <h5>Reflection and Future Directions</h5>
 
-<p>The updated demo is on the main page for the project. This was an absolute blast to put together over the course of several months. As a CS major, this stretched me in an entirely new dimension of building, and I want to continue to find ways of integrating more hardware into my work. I am grateful to the teaching staff, especially Bobby, for their guidance with the project, and to my friends who humored me as I excitedly demoed pieces of the project to them.</p>
+<p>The updated demo is on the "Product" tab for the project. This was an absolute blast to put together over the course of several months. As a CS major, this stretched me in an entirely new dimension of building, and I want to continue to find ways of integrating more hardware into my work. I am grateful to the teaching staff, especially Bobby, for their guidance with the project, and to my friends who humored me as I excitedly demoed pieces of the project to them.</p>
 
 <p>If I continue working on the project, I would make some adjustments to the housing to give it an even cleaner product feel; adjust the circuitry so that I can use any USB-C to charge, use a charging module that does not time out, and PCB mill a circuit board to reduce space and room for error with wires; and publish the app onto the App Store!</p>
 
 <p class="margin">   </p>
+
+  </div> <!-- End Process tab -->
+</div> <!-- End tab container -->
 
 </div>
 </xmp>
@@ -454,5 +708,27 @@ discovered.<span class="function">monitorCharacteristicForService</span>(
 
 <script src="../strapdown.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" ></script>
+
+<script>
+function switchTab(tabName) {
+  // Hide all tab contents
+  const tabContents = document.querySelectorAll('.tab-content');
+  tabContents.forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  // Remove active class from all buttons
+  const tabButtons = document.querySelectorAll('.tab-button');
+  tabButtons.forEach(button => {
+    button.classList.remove('active');
+  });
+  
+  // Show selected tab content
+  document.getElementById(tabName + '-tab').classList.add('active');
+  
+  // Add active class to clicked button
+  event.target.classList.add('active');
+}
+</script>
 
 </html>

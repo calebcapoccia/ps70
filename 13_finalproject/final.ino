@@ -18,15 +18,19 @@
 #define CHARACTERISTIC_UUID         "82b3bdc2-ccf2-4063-b820-9a66322f8234"
 #define BATTERY_CHARACTERISTIC_UUID "b2c3d4e5-1234-5678-9abc-def012345678"
 
-// Define pins
+// MAX7219 display pins
 const int dataPin = 5;
 const int csPin = 18;
 const int clkPin = 23;
-const int btnPin = 4;  // Changed from 19 to 4 for RTC wake support
 
+// Button pin
+const int btnPin = 4;
+
+// NeoPixel and MOSFET pins
 const int neoPixelPin = 12;  // NeoPixel data pin
 const int fetGatePin = 2;    // MOSFET gate control for displays
 
+// Battery pin
 const int batteryPin = 36; // ADC1_CH0 (VP) - analog input only
 
 #define NUM_LEDS 1
@@ -63,7 +67,7 @@ const unsigned long batteryInterval = 2000; // ms between reads
 unsigned long batteryLastRead = 0;
 BLECharacteristic *pBatteryCharacteristic = nullptr;
 int lastReportedPct = -1;
-bool deviceConnected = false; // forward use
+bool deviceConnected = false;
 
 // LiPo voltage range (single cell): ~3.0V empty to ~4.2V full.
 // User's "3.3V" LiPo: assuming direct connection within ESP32 ADC range (0-3.3V).
@@ -339,7 +343,7 @@ void setup() {
   universalBtn.begin();
 
   // Begin BLE connection
-  BLEDevice::init("CarDisplay");
+  BLEDevice::init("Kachow Display");
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new DisplayServerCallbacks());
 

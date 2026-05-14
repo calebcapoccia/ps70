@@ -180,14 +180,13 @@ export default function App() {
 
         if (!device) return;
 
-        // Filter by service UUID if available in advertisement
+        // Filter by name or service UUID
         const services = device.serviceUUIDs || [];
-        if (services.length > 0 && !services.includes(SERVICE_UUID)) {
-          return; // Skip devices that advertise services but not ours
-        }
-
-        // Also filter by name as a fallback
-        if (!device.name?.includes('CarDisplay')) {
+        const hasCorrectService = services.includes(SERVICE_UUID);
+        const hasCorrectName = device.name?.includes('Kachow') || device.name?.includes('Display');
+        
+        // Accept device if it has either the correct service OR the correct name
+        if (!hasCorrectService && !hasCorrectName) {
           return;
         }
 
